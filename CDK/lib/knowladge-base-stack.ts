@@ -13,6 +13,8 @@ export interface KnowledgeBaseStackProps extends StackProps {
 }
 
 export class KnowledgeBaseStack extends Stack {
+  readonly knowledgeBaseId: string;
+
     constructor(scope: Construct, id: string, props: KnowledgeBaseStackProps) {
       super(scope, id, props);
       const KNOWLEDGE_BASE_NAME = "bedrock-agent-knowladge-base"
@@ -42,6 +44,8 @@ export class KnowledgeBaseStack extends Stack {
           },
         },
       });
+
+      this.knowledgeBaseId = knowledgeBase.attrKnowledgeBaseId;
   
       const dataSource = new CfnDataSource(this, "DataSource", {
         name: KNOWLEDGE_BASE_NAME,
