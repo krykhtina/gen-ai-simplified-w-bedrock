@@ -3,7 +3,7 @@ import {
   CdkCustomResourceResponse,
   Context,
 } from "aws-lambda";
-import { createIndex } from "./openSearchClient";
+import { createAccessPolicy, createIndex, createNetworkSecurityPolicy } from "./openSearchClient";
 
 export const handler = async (
   event: CdkCustomResourceEvent,
@@ -15,21 +15,22 @@ export const handler = async (
 
   switch (requestType) {
     case "Create":
-      await createIndex({
-        host: requestProperties.collectionEndpoint!,
+      createAccessPolicy({
         namePrefix: requestProperties.namePrefix,
+        knowledgeBaseCustomResourceRole: requestProperties.knowledgeBaseCustomResourceRole,
+        knowledgeBaseRole: requestProperties.knowledgeBaseRole
       });
-    case "Update":
+      createNetworkSecurityPolicy({
+        namePrefix: requestProperties.namePrefix,
+      })
       await createIndex({
         host: requestProperties.collectionEndpoint!,
         namePrefix: requestProperties.namePrefix,
-      });
-    case "Delete":
-      await createIndex({
-        host: requestProperties.collectionEndpoint!,
-        namePrefix: requestProperties.namePrefix,
+        knowledgeBaseCustomResourceRole: requestProperties.knowledgeBaseCustomResourceRole,
+        knowledgeBaseRole: requestProperties.knowledgeBaseRole
       });
   }
+  console.log("exited switch")
 
   let response: CdkCustomResourceResponse = {};
 
