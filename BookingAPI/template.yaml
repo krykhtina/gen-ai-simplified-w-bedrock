@@ -28,7 +28,13 @@ Resources:
     Properties:
       Name: "booking"
       StageName: !Sub "${environment}"
-      DefinitionUri: ./api.yaml
+      DefinitionBody:
+        Fn::Transform:
+          Name: AWS::Include
+          Parameters:
+            Location: ./api.yaml
+      EndpointConfiguration:
+        Type: REGIONAL
 
   SearchFunction:
     Type: AWS::Serverless::Function
@@ -37,13 +43,6 @@ Resources:
     Properties:
       FunctionName: search
       CodeUri: ./cmd/functions/search/
-      Events:
-        CatchAll:
-          Type: Api
-          Properties:
-            RestApiId: !Ref BookingApiGateway
-            Path: /hotels
-            Method: GET
 
 Outputs:
   ApiGatewayEndpoint:
