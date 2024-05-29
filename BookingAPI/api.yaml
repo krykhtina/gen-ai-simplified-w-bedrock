@@ -1,0 +1,321 @@
+openapi: 3.0.3
+info:
+  title: Hotel Booking API
+  description: An API for finding and booking suitable hotel rooms based on customer's preferences and needs.
+  version: 1.0.0
+
+x-amazon-apigateway-request-validators:
+  all:
+    validateRequestBody: true
+    validateRequestParameters: true
+x-amazon-apigateway-request-validator: all
+
+paths:
+  /hotels:
+    get:
+      summary: Search for hotels
+      description: Search for hotels based on location, number of beds, accessibility features, pet-friendliness, and food accommodations.
+      parameters:
+        - name: location
+          in: query
+          description: The desired location for the hotel.
+          required: false
+          schema:
+            type: string
+        - name: number_of_beds
+          in: query
+          description: The number of beds required in the room.
+          required: false
+          schema:
+            type: integer
+        - name: accessibility
+          in: query
+          description: Accessibility features required.
+          required: false
+          schema:
+            type: boolean
+        - name: pet_friendly
+          in: query
+          description: Whether the room should be pet-friendly.
+          required: false
+          schema:
+            type: boolean
+        - name: food_accommodations
+          in: query
+          description: Food accommodations required (e.g., vegetarian, vegan).
+          required: false
+          schema:
+            type: string
+      responses:
+        '200':
+          description: A list of hotels matching the search criteria.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Hotel'
+        '400':
+          description: Invalid search parameters.
+        '500':
+          description: Server error.
+    x-amazon-apigateway-integration:
+      uri:
+        Fn::Sub: arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${SearchFunction.Arn}/invocations
+      httpMethod: POST
+      type: aws_proxy
+      passthroughBehavior: "when_no_match"
+      payloadFormatVersion: "1.0"
+
+  /hotels/{hotelId}/rooms:
+    get:
+      summary: Check room availability
+      description: Get the list of available rooms in a specific hotel.
+      parameters:
+        - name: hotelId
+          in: path
+          description: The ID of the hotel.
+          required: true
+          schema:
+            type: string
+        - name: check_in
+          in: query
+          description: Check-in date.
+          required: true
+          schema:
+            type: string
+            format: date
+        - name: check_out
+          in: query
+          description: Check-out date.
+          required: true
+          schema:
+            type: string
+            format: date
+      responses:
+        '200':
+          description: A list of available rooms.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Room'
+        '400':
+          description: Invalid parameters.
+        '404':
+          description: Hotel not found.
+        '500':
+          description: Server error.
+      x-amazon-apigateway-integration:
+        type: mock
+        requestTemplates:
+            application/json: '{"statusCode" : 200}'
+        passthroughBehavior: "when_no_templates"
+        responses:
+            "default":
+              statusCode: "200"
+              responseTemplates:
+                  application/json: '{"message": "mock response"}'
+
+  /booking:
+    post:
+      summary: Book a room
+      description: Book a room by providing customer details and payment information.
+      requestBody:
+        description: Booking information.
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BookingRequest'
+      responses:
+        '201':
+          description: Booking confirmed.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BookingResponse'
+        '400':
+          description: Invalid booking information.
+        '500':
+          description: Server error.
+      x-amazon-apigateway-integration:
+        type: mock
+        requestTemplates:
+            application/json: '{"statusCode" : 200}'
+        passthroughBehavior: "when_no_templates"
+        responses:
+            "default":
+              statusCode: "200"
+              responseTemplates:
+                  application/json: '{"message": "mock response"}'
+
+  /booking/{bookingId}:
+    delete:
+      summary: Cancel a booking
+      description: Cancel a booking by providing the booking ID.
+      parameters:
+        - name: bookingId
+          in: path
+          description: The ID of the booking to be cancelled.
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Booking cancelled.
+        '404':
+          description: Booking not found.
+        '500':
+          description: Server error.
+      x-amazon-apigateway-integration:
+        type: mock
+        requestTemplates:
+            application/json: '{"statusCode" : 200}'
+        passthroughBehavior: "when_no_templates"
+        responses:
+            "default":
+              statusCode: "200"
+              responseTemplates:
+                  application/json: '{"message": "mock response"}'
+
+components:
+  schemas:
+    Hotel:
+      type: object
+      properties:
+        id:
+          type: string
+          description: The unique identifier for the hotel.
+        name:
+          type: string
+          description: The name of the hotel.
+        location:
+          type: string
+          description: The location of the hotel.
+        amenities:
+          type: array
+          items:
+            type: string
+          description: A list of amenities provided by the hotel.
+        reviews:
+          type: array
+          items:
+            $ref: '#/components/schemas/Review'
+          description: Customer reviews for the hotel.
+
+    Room:
+      type: object
+      properties:
+        id:
+          type: string
+          description: The unique identifier for the room.
+        type:
+          type: string
+          description: The type of the room (e.g., single, double, suite).
+        number_of_beds:
+          type: integer
+          description: The number of beds in the room.
+        accessibility_features:
+          type: array
+          items:
+            type: string
+          description: A list of accessibility features in the room.
+        pet_friendly:
+          type: boolean
+          description: Whether the room is pet-friendly.
+        food_accommodations:
+          type: array
+          items:
+            type: string
+          description: A list of food accommodations provided.
+        pricing:
+          type: object
+          properties:
+            currency:
+              type: string
+            price_per_night:
+              type: number
+        availability:
+          type: array
+          items:
+            type: string
+            format: date
+          description: The available dates for the room.
+
+    Review:
+      type: object
+      properties:
+        customer_name:
+          type: string
+          description: The name of the customer who wrote the review.
+        rating:
+          type: integer
+          description: The rating given by the customer (1-5).
+        comment:
+          type: string
+          description: The comment provided by the customer.
+
+    BookingRequest:
+      type: object
+      required:
+        - hotel_id
+        - room_id
+        - customer_name
+        - contact_details
+        - payment_info
+      properties:
+        hotel_id:
+          type: string
+          description: The ID of the hotel where the booking is being made.
+        room_id:
+          type: string
+          description: The ID of the room being booked.
+        customer_name:
+          type: string
+          description: The name of the customer making the booking.
+        contact_details:
+          type: object
+          properties:
+            email:
+              type: string
+            phone:
+              type: string
+        payment_info:
+          type: object
+          properties:
+            card_number:
+              type: string
+            card_expiry:
+              type: string
+            card_cvc:
+              type: string
+
+    BookingResponse:
+      type: object
+      properties:
+        booking_id:
+          type: string
+          description: The unique identifier for the booking.
+        hotel_id:
+          type: string
+          description: The ID of the hotel where the booking is made.
+        room_id:
+          type: string
+          description: The ID of the room booked.
+        customer_name:
+          type: string
+          description: The name of the customer who made the booking.
+        check_in:
+          type: string
+          format: date
+        check_out:
+          type: string
+          format: date
+        total_price:
+          type: number
+          description: The total price for the booking.
+        confirmation_message:
+          type: string
+          description: The confirmation message with check-in instructions.

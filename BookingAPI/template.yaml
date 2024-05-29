@@ -1,0 +1,51 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: 'AWS::Serverless-2016-10-31'
+Description: Booking API
+
+Globals:
+  Api:
+    OpenApiVersion: 3.0.3
+  Function:
+    Timeout: 5
+    MemorySize: 128
+    Handler: bootstrap
+    Runtime: provided.al2
+    Architectures:
+      - x86_64
+
+Parameters:
+  environment:
+    Type: "String"
+    Default: dev
+#  ipAddressWhiteList:
+#    Type: "CommaDelimitedList"
+#    Default: "37.30.126.179/32"
+
+Resources:
+
+  BookingApiGateway:
+    Type: AWS::Serverless::Api
+    Properties:
+      Name: "booking"
+      StageName: !Sub "${environment}"
+      DefinitionUri: ./api.yaml
+
+  SearchFunction:
+    Type: AWS::Serverless::Function
+    Metadata:
+      BuildMethod: go1.x
+    Properties:
+      FunctionName: search
+      CodeUri: ./cmd/functions/search/
+      Events:
+        CatchAll:
+          Type: Api
+          Properties:
+            RestApiId: !Ref BookingApiGateway
+            Path: /hotels
+            Method: GET
+
+Outputs:
+  ApiGatewayEndpoint:
+    Description: "API Gateway endpoint URL"
+    Value: !Sub "https://${BookingApiGateway}.execute-api.${AWS::Region}.amazonaws.com/${environment}"
