@@ -79,7 +79,7 @@ export class BedrockAgentStack extends Stack {
       knowledgeBases: [
         {
           description:
-            'Knowladge base contains knowladge about the properties available in OMG booking details like emergency procedures, security, rules, utilities, decor, location, local area description and others.',
+            'Knowledge base contains knowladge about the properties available in OMG booking details like emergency procedures, security, rules, utilities, decor, location, local area description and others.',
           knowledgeBaseId: `${props.knowledgeBaseId}`,
           knowledgeBaseState: 'ENABLED',
         },
