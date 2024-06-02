@@ -23,7 +23,7 @@ class BedrockAgentService:
         self.agent_alias_id = config["bedrock_agent_alias_id"]
         self.bedrock_client = BedrockAgentClientWrapper(boto3_bedrock_client)
 
-    def chat(self, session_id, prompt: str, message_history: list[dict]):
+    def chat(self, session_id, prompt: str, message_history: list[dict], assistant_role):
         """
         Executes a chat request with the Bedrock Agent.
         Args:
@@ -35,9 +35,9 @@ class BedrockAgentService:
         """
         logging.info(f"Session {session_id}, prompt: {prompt}")
         return self.bedrock_client.execute_request(self.agent_id, self.agent_alias_id, session_id, prompt,
-                                                   message_history)
+                                                   message_history, assistant_role)
 
-    def end_chat(self, session_id):
+    def end_chat(self, session_id, message_history: list[dict]):
         """
         Ends the chat session with the Bedrock Agent.
         Args:
@@ -46,4 +46,4 @@ class BedrockAgentService:
             The response from the Bedrock Agent.
         """
         logging.info(f"End of session {session_id}")
-        return self.bedrock_client.execute_request(self.agent_id, self.agent_alias_id, session_id, None, True)
+        return self.bedrock_client.execute_request(self.agent_id, self.agent_alias_id, session_id, None, message_history, True)
