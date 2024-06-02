@@ -1,7 +1,5 @@
 import uuid
-
 import streamlit as st
-
 from agent_connector.bedrock_agent_service import BedrockAgentService
 
 
@@ -29,23 +27,29 @@ class BookingApp:
                 st.markdown(message["content"])
 
         if prompt := st.chat_input():
-
+            # Add user message to chat history
             with st.chat_message("user"):
                 st.markdown(prompt)
                 st.session_state.messages.append({"role": "user", "content": prompt})
 
+            # Get assistant response
             with st.chat_message("assistant"):
                 with st.spinner('Thinking...'):
-                    response = self.get_response(prompt, session_id)
-                st.write(response)
+                    response = self.get_response(prompt, session_id, st.session_state["messages"])
+                st.markdown(response)
                 st.session_state.messages.append({"role": "assistant", "content": response})
 
-    def get_response(self, prompt, session_id):
+    def get_response(self, prompt, session_id, messages):
         if prompt == "end":
             st.write("Thank you for using our service!")
             return self.agent_service.end_chat(session_id)
 
         if prompt:
-            return self.agent_service.chat(session_id, prompt)
+            # Pass the full conversation history to the agent service
+            return self.agent_service.chat(session_id, prompt, messages)
 
 
+# Run the app
+if __name__ == "__main__":
+    app = BookingApp()
+    app.launch()
