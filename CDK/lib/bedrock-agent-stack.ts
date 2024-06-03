@@ -69,7 +69,7 @@ export class BedrockAgentStack extends Stack {
 
     // Upload schema to S3
     new BucketDeployment(this, "Deployment", {
-      sources: [Source.asset("./BookingAPI/api.yaml")],
+      sources: [Source.asset("../BookingAPI/schema")],
       destinationBucket: bucket,
     });
 
