@@ -4,6 +4,8 @@ import { Construct } from "constructs";
 import { CfnAgent, CfnAgentAlias } from "aws-cdk-lib/aws-bedrock";
 import { resolve } from 'path';
 import { readFileSync } from "fs";
+import { Bucket } from "aws-cdk-lib/aws-s3";
+import { BucketDeployment, Source } from "aws-cdk-lib/aws-s3-deployment";
 
 export interface BedrockAgentStackProps extends StackProps {
     readonly namePrefix: string;
@@ -18,9 +20,6 @@ export class BedrockAgentStack extends Stack {
 
     // https://docs.aws.amazon.com/bedrock/latest/userguide/agents-permissions.html
     const agentIamRole = new Role(this, `${props.namePrefix}-bedrock-agent-role`, {
-      // The role name has to start with AmazonBedrockExecutionRoleForAgents_ as per
-      // https://docs.aws.amazon.com/bedrock/latest/APIReference/API_agent_Agent.html
-      // see also: https://sage.amazon.dev/posts/1793211
       roleName: `${props.namePrefix}-agent-role`,
       assumedBy: new aws_iam.ServicePrincipal('bedrock.amazonaws.com', {
         conditions: {
@@ -54,18 +53,51 @@ export class BedrockAgentStack extends Stack {
             }),
           ],
         }),
+        actionGroupPolicy: new PolicyDocument({
+          statements: [
+            new PolicyStatement({
+              effect: Effect.ALLOW,
+              actions: [ 's3:GetObject'],
+              resources: ['arn:aws:s3:::bucket/path/to/schema'],
+            }),
+          ],
+        }),
       },
     });
 
+    const bucket = new Bucket(this, "AgentBucket");
+
+    // Upload schema to S3
+    new BucketDeployment(this, "Deployment", {
+      sources: [Source.asset("./BookingAPI/api.yaml")],
+      destinationBucket: bucket,
+    });
+
+    const s3BucketName = bucket.bucketName;
+    const s3ObjectKey = "api.yaml";
+
+    const actionGroupProperties: CfnAgent.AgentActionGroupProperty = {
+        actionGroupName: 'Booking',
+        actionGroupExecutor: {
+          lambda: "APILambdaArn",
+        },
+        apiSchema: {
+          s3: {
+            s3BucketName: s3BucketName,
+            s3ObjectKey: s3ObjectKey,
+          }
+        },
+        description: 'This is an API that allows to book properties available on OMG Booking webside.',
+      };
+
+
     // https://docs.aws.amazon.com/cdk/api/v2/docs/aws-cdk-lib.aws_bedrock.CfnAgent.html
     const agent = new CfnAgent(this, `${props.namePrefix}-bedrock-agent`, {
-      agentName: 'AssistantDriverAgent',
+      agentName: 'OmgBookingAgent',
       agentResourceRoleArn: agentIamRole.roleArn,
       foundationModel: 'anthropic.claude-3-haiku-20240307-v1:0',
-
       // Optional props
       autoPrepare: true,
-      // description: readFileSync(resolve('lib/prompts/description.txt'), 'utf-8'),
       idleSessionTtlInSeconds: 3600,
       instruction: readFileSync(resolve('lib/prompts/instruction.txt'), 'utf-8'),
       knowledgeBases: [
@@ -76,12 +108,13 @@ export class BedrockAgentStack extends Stack {
           knowledgeBaseState: 'ENABLED',
         },
       ],
+      // actionGroups: Add action broup here
     });
 
     const agentAlias = new CfnAgentAlias(this,  `${props.namePrefix}-bedrock-agent-alias`, {
       agentAliasName: `${props.namePrefix}-agent-alias`,
       agentId: agent.attrAgentId,
-      description: `Alias for driver agent - ${new Date().toDateString()}`,
+      description: `Alias for booking agent - ${new Date().toDateString()}`,
     });
     // Ensure agent is fully stabilized before updating the alias
     agentAlias.node.addDependency(agent);
