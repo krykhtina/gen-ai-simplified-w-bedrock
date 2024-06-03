@@ -13,6 +13,13 @@ type Request = events.APIGatewayProxyRequest
 type Response = events.APIGatewayProxyResponse
 
 func handler(request Request) (Response, error) {
+	propertyId, ok := request.PathParameters["propertyId"]
+	if !ok {
+		return Response{
+			Body:       "No property id found",
+			StatusCode: 400,
+		}, nil
+	}
 	params := request.QueryStringParameters
 	if params == nil {
 		return Response{
@@ -21,10 +28,9 @@ func handler(request Request) (Response, error) {
 		}, nil
 	}
 	result := []string{
-		fmt.Sprintf("city: %s", params["city"]),
-		fmt.Sprintf("country: %s", params["country"]),
-		fmt.Sprintf("bedrooms: %s", params["bedrooms"]),
-		fmt.Sprintf("guests: %s", params["guests"]),
+		fmt.Sprintf("propertyId: %s", propertyId),
+		fmt.Sprintf("startDate: %s", params["startDate"]),
+		fmt.Sprintf("endDate: %s", params["endDate"]),
 	}
 	body, err := json.Marshal(result)
 	if err != nil {

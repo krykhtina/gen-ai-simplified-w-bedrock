@@ -9,7 +9,7 @@ Globals:
     Timeout: 5
     MemorySize: 128
     Handler: bootstrap
-    Runtime: provided.al2
+    Runtime: provided.al2023
     Architectures:
       - x86_64
 
@@ -31,6 +31,15 @@ Resources:
           Name: AWS::Include
           Parameters:
             Location: ./api.yaml
+    Connectors:
+      ApiToLambdaConn:
+        Properties:
+          Destination:
+            - Id: SearchFunction
+            - Id: PropertyFunction
+            - Id: AvailabilityFunction
+          Permissions:
+            - Write
 
   SearchFunction:
     Type: AWS::Serverless::Function
@@ -39,29 +48,110 @@ Resources:
     Properties:
       FunctionName: search
       CodeUri: ./cmd/functions/search/
+    Connectors:
+      TableConn:
+        Properties:
+          Destination:
+            Id: PropertiesTable
+          Permissions:
+            - Read
 
-  ApiGatewayRole:
-    Type: AWS::IAM::Role
+  PropertyFunction:
+    Type: AWS::Serverless::Function
+    Metadata:
+      BuildMethod: go1.x
     Properties:
-      AssumeRolePolicyDocument:
-        Version: '2012-10-17'
-        Statement:
-          - Effect: Allow
-            Principal:
-              Service:
-                - apigateway.amazonaws.com
-            Action:
-              - 'sts:AssumeRole'
-      Policies:
-        - PolicyName: !Sub ${AWS::StackName}-lambda-invoke
-          PolicyDocument:
-            Version: '2012-10-17'
-            Statement:
-              - Effect: Allow
-                Action:
-                  - lambda:InvokeFunction
-                Resource:
-                  - !GetAtt SearchFunction.Arn
+      FunctionName: property
+      CodeUri: ./cmd/functions/property/
+    Connectors:
+      TableConn:
+        Properties:
+          Destination:
+            - Id: PropertiesTable
+          Permissions:
+            - Read
+
+  AvailabilityFunction:
+    Type: AWS::Serverless::Function
+    Metadata:
+      BuildMethod: go1.x
+    Properties:
+      FunctionName: availability
+      CodeUri: ./cmd/functions/availability/
+    Connectors:
+      TableConn:
+        Properties:
+          Destination:
+            - Id: PropertiesTable
+            - Id: BookingsTable
+          Permissions:
+            - Read
+
+  PropertiesTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: Properties
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: PropertyID
+          AttributeType: N
+        - AttributeName: City
+          AttributeType: S
+        - AttributeName: Country
+          AttributeType: S
+        - AttributeName: Bedrooms
+          AttributeType: N
+        - AttributeName: Guests
+          AttributeType: N
+      KeySchema:
+        - AttributeName: PropertyID
+          KeyType: HASH
+      GlobalSecondaryIndexes:
+        - IndexName: CityIndex
+          KeySchema:
+            - AttributeName: City
+              KeyType: HASH
+          Projection:
+            ProjectionType: ALL
+        - IndexName: CountryIndex
+          KeySchema:
+            - AttributeName: Country
+              KeyType: HASH
+          Projection:
+            ProjectionType: ALL
+        - IndexName: BedroomsIndex
+          KeySchema:
+            - AttributeName: Bedrooms
+              KeyType: HASH
+          Projection:
+            ProjectionType: ALL
+        - IndexName: GuestsIndex
+          KeySchema:
+            - AttributeName: Guests
+              KeyType: HASH
+          Projection:
+            ProjectionType: ALL
+
+  BookingsTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: Bookings
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: BookingID
+          AttributeType: N
+        - AttributeName: PropertyID
+          AttributeType: N
+      KeySchema:
+        - AttributeName: BookingID
+          KeyType: HASH
+      GlobalSecondaryIndexes:
+        - IndexName: PropertyIDIndex
+          KeySchema:
+            - AttributeName: PropertyID
+              KeyType: HASH
+          Projection:
+            ProjectionType: ALL
 
 Outputs:
   ApiGatewayEndpoint:
