@@ -22,20 +22,7 @@ paths:
         content:
           application/json:
             schema:
-              type: object
-              properties:
-                city:
-                  type: string
-                  example: New York
-                country:
-                  type: string
-                  example: USA
-                bedrooms:
-                  type: integer
-                  example: 3
-                guests:
-                  type: integer
-                  example: 6
+                $ref: '#/components/schemas/SearchOptions'
       responses:
         '200':
           description: Properties matching the search criteria.
@@ -199,6 +186,21 @@ paths:
 
 components:
   schemas:
+    SearchOptions:
+      type: object
+      properties:
+        city:
+          type: string
+          example: New York
+        country:
+          type: string
+          example: USA
+        bedrooms:
+          type: integer
+          example: 3
+        guests:
+          type: integer
+          example: 6
     Property:
       type: object
       properties:
@@ -281,7 +283,6 @@ components:
           type: string
           format: date
           example: '2023-01-07'
-
     BookingResponse:
       type: object
       properties:

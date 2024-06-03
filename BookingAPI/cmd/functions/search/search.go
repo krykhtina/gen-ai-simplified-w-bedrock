@@ -1,8 +1,14 @@
 package main
 
 import (
+	"booking/configuration"
+	"booking/internal/database"
+	"booking/internal/domain"
+	"booking/internal/service/properties"
+	"booking/internal/transport"
+	"context"
 	"encoding/json"
-	"fmt"
+	"net/http"
 
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-lambda-go/lambda"
@@ -12,28 +18,36 @@ import (
 type Request = events.APIGatewayProxyRequest
 type Response = events.APIGatewayProxyResponse
 
-func handler(request Request) (Response, error) {
-	params := request.QueryStringParameters
-	if params == nil {
-		return Response{
-			Body:       "No query parameters found",
-			StatusCode: 400,
-		}, nil
+// setting up the services
+var config = configuration.New()
+var store = database.NewPropertiesStore(config)
+var service = properties.NewService(store)
+
+func handler(ctx context.Context, request Request) (*Response, error) {
+	body := request.Body
+	if body == "" {
+		return transport.Response(http.StatusBadRequest,
+			transport.ErrorBody{"Empty body"})
 	}
-	result := []string{
-		fmt.Sprintf("city: %s", params["city"]),
-		fmt.Sprintf("country: %s", params["country"]),
-		fmt.Sprintf("bedrooms: %s", params["bedrooms"]),
-		fmt.Sprintf("guests: %s", params["guests"]),
-	}
-	body, err := json.Marshal(result)
+
+	options := new(domain.SearchOptions)
+	err := json.Unmarshal([]byte(body), options)
 	if err != nil {
-		return Response{}, err
+		return transport.Response(http.StatusBadRequest,
+			transport.ErrorBody{"Invalid JSON"})
 	}
-	return Response{
-		Body:       string(body),
-		StatusCode: 200,
-	}, nil
+
+	if options.City == nil && options.Country == nil {
+		return transport.Response(http.StatusBadRequest,
+			transport.ErrorBody{"Missing city or country"})
+	}
+
+	properties, err := service.Search(ctx, *options)
+	if err != nil {
+		return nil, err
+	}
+
+	return transport.Response(http.StatusOK, properties)
 }
 
 func main() {

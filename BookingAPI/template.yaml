@@ -48,6 +48,10 @@ Resources:
     Properties:
       FunctionName: search
       CodeUri: ./cmd/functions/search/
+      Environment:
+        Variables:
+          PROPERTIES_TABLE_NAME: !Ref PropertiesTable
+          PROPERTIES_TABLE_ARN: !GetAtt PropertiesTable.Arn
     Connectors:
       TableConn:
         Properties:
@@ -63,6 +67,10 @@ Resources:
     Properties:
       FunctionName: property
       CodeUri: ./cmd/functions/property/
+      Environment:
+        Variables:
+          PROPERTIES_TABLE_NAME: !Ref PropertiesTable
+          PROPERTIES_TABLE_ARN: !GetAtt PropertiesTable.Arn
     Connectors:
       TableConn:
         Properties:
@@ -157,3 +165,6 @@ Outputs:
   ApiGatewayEndpoint:
     Description: "API Gateway endpoint URL"
     Value: !Sub "https://${BookingApiGateway}.execute-api.${AWS::Region}.amazonaws.com/${environment}"
+  ApiGatewayId:
+    Description: "API Gateway ID"
+    Value: !Sub "${BookingApiGateway}"

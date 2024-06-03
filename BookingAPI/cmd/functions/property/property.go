@@ -1,36 +1,53 @@
 package main
 
 import (
-	"encoding/json"
-	"fmt"
+	"context"
+	"net/http"
+	"strconv"
 
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-lambda-go/lambda"
+
+	"booking/configuration"
+	"booking/internal/database"
+	"booking/internal/service/properties"
+	"booking/internal/transport"
 )
 
 // aliasing the types to keep lines short
 type Request = events.APIGatewayProxyRequest
 type Response = events.APIGatewayProxyResponse
 
-func handler(request Request) (Response, error) {
+// setting up the services
+var config = configuration.New()
+var store = database.NewPropertiesStore(config)
+var service = properties.NewService(store)
+
+func handler(ctx context.Context, request Request) (*Response, error) {
 	propertyId, ok := request.PathParameters["propertyId"]
 	if !ok {
-		return Response{
-			Body:       "No property id found",
-			StatusCode: 400,
-		}, nil
+		return transport.Response(http.StatusBadRequest,
+			transport.ErrorBody{"No property id found"})
 	}
-	result := []string{
-		fmt.Sprintf("propertyId: %s", propertyId),
+	if propertyId == "" {
+		return transport.Response(http.StatusBadRequest,
+			transport.ErrorBody{"Empty property id"})
 	}
-	body, err := json.Marshal(result)
+	id, err := strconv.Atoi(propertyId)
 	if err != nil {
-		return Response{}, err
+		return transport.Response(http.StatusBadRequest,
+			transport.ErrorBody{"Invalid property id"})
 	}
-	return Response{
-		Body:       string(body),
-		StatusCode: 200,
-	}, nil
+
+	property, err := service.GetProperty(ctx, id)
+	if err != nil {
+		return nil, err
+	} else if property == nil {
+		return transport.Response(http.StatusNotFound,
+			transport.ErrorBody{"Property not found"})
+	}
+
+	return transport.Response(http.StatusOK, property)
 }
 
 func main() {
