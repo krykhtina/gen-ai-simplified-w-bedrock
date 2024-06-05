@@ -14,7 +14,11 @@ func NewService(propertyRepository propertiesRepository) *propertiesService {
 }
 
 func (srv *propertiesService) GetProperty(ctx context.Context, id int) (*domain.Property, error) {
-	return srv.propertiesRepository.GetProperty(ctx, id)
+	property, err := srv.propertiesRepository.GetProperty(ctx, id)
+	if err == nil && property == nil {
+		return nil, domain.ErrPropertyNotFound
+	}
+	return property, err
 }
 
 func (srv *propertiesService) Search(ctx context.Context, options domain.SearchOptions) ([]domain.Property, error) {

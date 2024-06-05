@@ -17,6 +17,8 @@ confirm_changeset = true
 region = "eu-central-1"
 resolve_s3 = true
 s3_prefix = "booking-api"
+parameter_overrides = "environment=\"dev\""
+image_repositories = []
 
 [default.package.parameters]
 resolve_s3 = true

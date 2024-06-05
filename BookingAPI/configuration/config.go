@@ -11,11 +11,13 @@ import (
 
 const (
 	EnvPropertiesTableName = "PROPERTIES_TABLE_NAME"
+	EnvBookingsTableName   = "BOOKINGS_TABLE_NAME"
 )
 
 type Config struct {
 	AwsConfig           aws.Config
 	PropertiesTableName string
+	BookingsTableName   string
 }
 
 func New() Config {
@@ -29,8 +31,14 @@ func New() Config {
 		panic(fmt.Errorf("%s is not set", EnvPropertiesTableName))
 	}
 
+	bookingsTableName := os.Getenv(EnvBookingsTableName)
+	if bookingsTableName == "" {
+		panic(fmt.Errorf("%s is not set", EnvBookingsTableName))
+	}
+
 	return Config{
 		AwsConfig:           cfg,
 		PropertiesTableName: propertiesTableName,
+		BookingsTableName:   bookingsTableName,
 	}
 }

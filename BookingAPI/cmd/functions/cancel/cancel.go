@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"net/http"
-	"strconv"
 
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-lambda-go/lambda"
@@ -11,8 +10,10 @@ import (
 	"booking/configuration"
 	"booking/internal/database"
 	"booking/internal/domain"
-	"booking/internal/service/properties"
+	"booking/internal/service/bookings"
 	"booking/internal/transport"
+
+	"github.com/google/uuid"
 )
 
 // aliasing the types to keep lines short
@@ -21,36 +22,38 @@ type Response = events.APIGatewayProxyResponse
 
 // setting up the services
 var config = configuration.New()
-var store = database.NewPropertiesStore(config)
-var service = properties.NewService(store)
+var bookingsStore = database.NewBookingsStore(config)
+var propertiesStore = database.NewPropertiesStore(config)
+var service = bookings.NewService(bookingsStore, propertiesStore)
 
 func handler(ctx context.Context, request Request) (*Response, error) {
-	propertyIdParam, ok := request.PathParameters["propertyId"]
+	bookingIdParam, ok := request.PathParameters["bookingId"]
 	if !ok {
 		return transport.Response(http.StatusBadRequest,
-			transport.ErrorBody{"No property id found"})
+			transport.ErrorBody{"No booking id found"})
 	}
-	if propertyIdParam == "" {
+	if bookingIdParam == "" {
 		return transport.Response(http.StatusBadRequest,
-			transport.ErrorBody{"Empty property id"})
-	}
-	propertyId, err := strconv.Atoi(propertyIdParam)
-	if err != nil {
-		return transport.Response(http.StatusBadRequest,
-			transport.ErrorBody{"Invalid property id"})
+			transport.ErrorBody{"Empty booking id"})
 	}
 
-	property, err := service.GetProperty(ctx, propertyId)
+	bookingId, err := uuid.Parse(bookingIdParam)
+	if err != nil {
+		return transport.Response(http.StatusBadRequest,
+			transport.ErrorBody{"Invalid booking id"})
+	}
+
+	err = service.Cancel(ctx, bookingId)
 	if err != nil {
 		switch err {
-		case domain.ErrPropertyNotFound:
+		case domain.ErrBookingNotFound:
 			return transport.Response(http.StatusNotFound,
-				transport.ErrorBody{"Property not found"})
+				transport.ErrorBody{"Booking not found"})
 		default:
 			return nil, err
 		}
 	}
-	return transport.Response(http.StatusOK, property)
+	return transport.Response(http.StatusNoContent, nil)
 }
 
 func main() {

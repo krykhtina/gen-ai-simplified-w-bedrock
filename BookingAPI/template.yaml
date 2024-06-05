@@ -5,6 +5,7 @@ Description: Booking API
 Globals:
   Api:
     OpenApiVersion: 3.0.3
+    TracingEnabled: true
   Function:
     Timeout: 5
     MemorySize: 128
@@ -12,6 +13,14 @@ Globals:
     Runtime: provided.al2023
     Architectures:
       - x86_64
+    Environment:
+      Variables:
+        PROPERTIES_TABLE_NAME: !Ref PropertiesTable
+        PROPERTIES_TABLE_ARN: !GetAtt PropertiesTable.Arn
+        BOOKINGS_TABLE_NAME: !Ref BookingsTable
+        BOOKINGS_TABLE_ARN: !GetAtt BookingsTable.Arn
+    Tracing: Active
+
 
 Parameters:
   environment:
@@ -38,6 +47,8 @@ Resources:
             - Id: SearchFunction
             - Id: PropertyFunction
             - Id: AvailabilityFunction
+            - Id: BookingFunction
+            - Id: CancelFunction
           Permissions:
             - Write
 
@@ -48,10 +59,6 @@ Resources:
     Properties:
       FunctionName: search
       CodeUri: ./cmd/functions/search/
-      Environment:
-        Variables:
-          PROPERTIES_TABLE_NAME: !Ref PropertiesTable
-          PROPERTIES_TABLE_ARN: !GetAtt PropertiesTable.Arn
     Connectors:
       TableConn:
         Properties:
@@ -67,10 +74,6 @@ Resources:
     Properties:
       FunctionName: property
       CodeUri: ./cmd/functions/property/
-      Environment:
-        Variables:
-          PROPERTIES_TABLE_NAME: !Ref PropertiesTable
-          PROPERTIES_TABLE_ARN: !GetAtt PropertiesTable.Arn
     Connectors:
       TableConn:
         Properties:
@@ -95,47 +98,85 @@ Resources:
           Permissions:
             - Read
 
+  BookingFunction:
+    Type: AWS::Serverless::Function
+    Metadata:
+      BuildMethod: go1.x
+    Properties:
+      FunctionName: booking
+      CodeUri: ./cmd/functions/booking/
+    Connectors:
+      PropertiesConn:
+        Properties:
+          Destination:
+            - Id: PropertiesTable
+          Permissions:
+            - Read
+      BookingsConn:
+        Properties:
+          Destination:
+            - Id: BookingsTable
+          Permissions:
+            - Read
+            - Write
+
+  CancelFunction:
+    Type: AWS::Serverless::Function
+    Metadata:
+      BuildMethod: go1.x
+    Properties:
+      FunctionName: cancel
+      CodeUri: ./cmd/functions/cancel/
+    Connectors:
+      TableConn:
+        Properties:
+          Destination:
+            - Id: BookingsTable
+          Permissions:
+            - Read
+            - Write
+
   PropertiesTable:
     Type: AWS::DynamoDB::Table
     Properties:
       TableName: Properties
       BillingMode: PAY_PER_REQUEST
       AttributeDefinitions:
-        - AttributeName: PropertyID
+        - AttributeName: propertyId
           AttributeType: N
-        - AttributeName: City
+        - AttributeName: city
           AttributeType: S
-        - AttributeName: Country
+        - AttributeName: country
           AttributeType: S
-        - AttributeName: Bedrooms
+        - AttributeName: bedrooms
           AttributeType: N
-        - AttributeName: Guests
+        - AttributeName: guests
           AttributeType: N
       KeySchema:
-        - AttributeName: PropertyID
+        - AttributeName: propertyId
           KeyType: HASH
       GlobalSecondaryIndexes:
         - IndexName: CityIndex
           KeySchema:
-            - AttributeName: City
+            - AttributeName: city
               KeyType: HASH
           Projection:
             ProjectionType: ALL
         - IndexName: CountryIndex
           KeySchema:
-            - AttributeName: Country
+            - AttributeName: country
               KeyType: HASH
           Projection:
             ProjectionType: ALL
         - IndexName: BedroomsIndex
           KeySchema:
-            - AttributeName: Bedrooms
+            - AttributeName: bedrooms
               KeyType: HASH
           Projection:
             ProjectionType: ALL
         - IndexName: GuestsIndex
           KeySchema:
-            - AttributeName: Guests
+            - AttributeName: guests
               KeyType: HASH
           Projection:
             ProjectionType: ALL
@@ -146,20 +187,33 @@ Resources:
       TableName: Bookings
       BillingMode: PAY_PER_REQUEST
       AttributeDefinitions:
-        - AttributeName: BookingID
-          AttributeType: N
-        - AttributeName: PropertyID
+        - AttributeName: bookingId
+          AttributeType: S
+        - AttributeName: propertyId
           AttributeType: N
       KeySchema:
-        - AttributeName: BookingID
+        - AttributeName: bookingId
           KeyType: HASH
       GlobalSecondaryIndexes:
-        - IndexName: PropertyIDIndex
+        - IndexName: PropertyIdIndex
           KeySchema:
-            - AttributeName: PropertyID
+            - AttributeName: propertyId
               KeyType: HASH
           Projection:
             ProjectionType: ALL
+
+  ApplicationResourceGroup:
+    Type: AWS::ResourceGroups::Group
+    Properties:
+      Name: !Sub "ApplicationInsights-SAM-${AWS::StackName}"
+      ResourceQuery:
+        Type: CLOUDFORMATION_STACK_1_0
+
+  ApplicationInsightsMonitoring:
+    Type: AWS::ApplicationInsights::Application
+    Properties:
+      ResourceGroupName: !Ref ApplicationResourceGroup
+      AutoConfigurationEnabled: true
 
 Outputs:
   ApiGatewayEndpoint:

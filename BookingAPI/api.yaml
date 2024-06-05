@@ -101,13 +101,7 @@ paths:
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  available:
-                    type: boolean
-                  price:
-                    type: number
-                    format: float
+                $ref: '#/components/schemas/Availability'
         '400':
           description: Invalid parameters.
         '404':
@@ -145,17 +139,14 @@ paths:
         '500':
           description: Server error.
       x-amazon-apigateway-integration:
-        type: mock
-        requestTemplates:
-            application/json: '{"statusCode" : 200}'
-        passthroughBehavior: "when_no_templates"
-        responses:
-            "default":
-              statusCode: "200"
-              responseTemplates:
-                  application/json: '{"message": "mock response"}'
+        uri:
+          Fn::Sub: arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${BookingFunction.Arn}/invocations
+        httpMethod: POST
+        type: aws_proxy
+        passthroughBehavior: "when_no_match"
+        payloadFormatVersion: "1.0"
 
-  /booking/{bookingId}:
+  /bookings/{bookingId}:
     delete:
       summary: Cancel a booking
       description: Cancel a booking by providing the booking ID.
@@ -166,6 +157,7 @@ paths:
           required: true
           schema:
             type: string
+            format: uuid
       responses:
         '204':
           description: Booking cancelled.
@@ -174,15 +166,12 @@ paths:
         '500':
           description: Server error.
       x-amazon-apigateway-integration:
-        type: mock
-        requestTemplates:
-            application/json: '{"statusCode" : 200}'
-        passthroughBehavior: "when_no_templates"
-        responses:
-            "default":
-              statusCode: "200"
-              responseTemplates:
-                  application/json: '{"message": "mock response"}'
+        uri:
+          Fn::Sub: arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${CancelFunction.Arn}/invocations
+        httpMethod: POST
+        type: aws_proxy
+        passthroughBehavior: "when_no_match"
+        payloadFormatVersion: "1.0"
 
 components:
   schemas:
@@ -203,41 +192,61 @@ components:
           example: 6
     Property:
       type: object
+      required:
+        - propertyId
+        - address
+        - city
+        - country
+        - location
+        - size
+        - bedrooms
+        - guests
       properties:
-        PropertyID:
+        propertyId:
           type: integer
-        Address:
+        address:
           type: string
-        City:
+        city:
           type: string
-        Country:
+        country:
           type: string
-        Location:
+        location:
           type: string
-        Size:
+        size:
           type: integer
-        Bedrooms:
+        bedrooms:
           type: integer
-        Guests:
+        guests:
           type: integer
-        Layout:
+        layout:
           type: string
-        ArchitecturalStyle:
+        architecturalStyle:
           type: string
-        RecommendationDescription:
+        recommendationDescription:
           type: string
-        EmergencyInstructions:
+        emergencyInstructions:
           type: string
-        AccessInstructions:
+        accessInstructions:
           type: string
-        FeatureDescription:
+        featureDescription:
           type: string
-        RuleDescription:
+        ruleDescription:
           type: string
-        SecurityDescription:
+        securityDescription:
           type: string
-        Utilities:
+        utilities:
           type: string
+    Availability:
+      type: object
+      required:
+        - available
+        - price
+      properties:
+        available:
+          type: boolean
+        price:
+          type: number
+          format: float
     BookingRequest:
       type: object
       required:
@@ -285,10 +294,18 @@ components:
           example: '2023-01-07'
     BookingResponse:
       type: object
+      required:
+        - bookingId
+        - propertyId
+        - customerName
+        - startDate
+        - endDate
+        - totalAmount
       properties:
         bookingId:
-          type: integer
-          example: 1001
+          type: string
+          format: uuid
+          example: 'f81d4fae-7dec-11d0-a765-00a0c91e6bf6'
         propertyId:
           type: integer
           example: 1

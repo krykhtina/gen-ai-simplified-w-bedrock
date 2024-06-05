@@ -7,6 +7,12 @@ import (
 	openapi_types "github.com/oapi-codegen/runtime/types"
 )
 
+// Availability defines model for Availability.
+type Availability struct {
+	Available bool    `json:"available"`
+	Price     float32 `json:"price"`
+}
+
 // BookingRequest defines model for BookingRequest.
 type BookingRequest struct {
 	ContactDetails struct {
@@ -26,34 +32,34 @@ type BookingRequest struct {
 
 // BookingResponse defines model for BookingResponse.
 type BookingResponse struct {
-	BookingId           *int                `json:"bookingId,omitempty"`
-	CheckInInstructions *string             `json:"checkInInstructions,omitempty"`
-	CustomerName        *string             `json:"customerName,omitempty"`
-	EndDate             *openapi_types.Date `json:"endDate,omitempty"`
-	PropertyId          *int                `json:"propertyId,omitempty"`
-	StartDate           *openapi_types.Date `json:"startDate,omitempty"`
-	TotalAmount         *float32            `json:"totalAmount,omitempty"`
+	BookingId           openapi_types.UUID `json:"bookingId"`
+	CheckInInstructions *string            `json:"checkInInstructions,omitempty"`
+	CustomerName        string             `json:"customerName"`
+	EndDate             openapi_types.Date `json:"endDate"`
+	PropertyId          int                `json:"propertyId"`
+	StartDate           openapi_types.Date `json:"startDate"`
+	TotalAmount         float32            `json:"totalAmount"`
 }
 
 // Property defines model for Property.
 type Property struct {
-	AccessInstructions        *string `json:"AccessInstructions,omitempty"`
-	Address                   *string `json:"Address,omitempty"`
-	ArchitecturalStyle        *string `json:"ArchitecturalStyle,omitempty"`
-	Bedrooms                  *int    `json:"Bedrooms,omitempty"`
-	City                      *string `json:"City,omitempty"`
-	Country                   *string `json:"Country,omitempty"`
-	EmergencyInstructions     *string `json:"EmergencyInstructions,omitempty"`
-	FeatureDescription        *string `json:"FeatureDescription,omitempty"`
-	Guests                    *int    `json:"Guests,omitempty"`
-	Layout                    *string `json:"Layout,omitempty"`
-	Location                  *string `json:"Location,omitempty"`
-	PropertyID                *int    `json:"PropertyID,omitempty"`
-	RecommendationDescription *string `json:"RecommendationDescription,omitempty"`
-	RuleDescription           *string `json:"RuleDescription,omitempty"`
-	SecurityDescription       *string `json:"SecurityDescription,omitempty"`
-	Size                      *int    `json:"Size,omitempty"`
-	Utilities                 *string `json:"Utilities,omitempty"`
+	AccessInstructions        *string `json:"accessInstructions,omitempty"`
+	Address                   string  `json:"address"`
+	ArchitecturalStyle        *string `json:"architecturalStyle,omitempty"`
+	Bedrooms                  int     `json:"bedrooms"`
+	City                      string  `json:"city"`
+	Country                   string  `json:"country"`
+	EmergencyInstructions     *string `json:"emergencyInstructions,omitempty"`
+	FeatureDescription        *string `json:"featureDescription,omitempty"`
+	Guests                    int     `json:"guests"`
+	Layout                    *string `json:"layout,omitempty"`
+	Location                  string  `json:"location"`
+	PropertyId                int     `json:"propertyId"`
+	RecommendationDescription *string `json:"recommendationDescription,omitempty"`
+	RuleDescription           *string `json:"ruleDescription,omitempty"`
+	SecurityDescription       *string `json:"securityDescription,omitempty"`
+	Size                      int     `json:"size"`
+	Utilities                 *string `json:"utilities,omitempty"`
 }
 
 // SearchOptions defines model for SearchOptions.

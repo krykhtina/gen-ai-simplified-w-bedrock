@@ -20,11 +20,11 @@ func NewPropertiesStore(config configuration.Config) *propertiesStore {
 	}
 }
 
-func (store *propertiesStore) GetProperty(ctx context.Context, id int) (*domain.Property, error) {
+func (store *propertiesStore) GetProperty(ctx context.Context, propertyId int) (*domain.Property, error) {
 	return getItem[domain.Property](
 		ctx,
 		map[string]types.AttributeValue{
-			"PropertyID": &types.AttributeValueMemberN{Value: strconv.Itoa(id)},
+			"propertyId": &types.AttributeValueMemberN{Value: strconv.Itoa(propertyId)},
 		},
 		store.table,
 	)
@@ -38,16 +38,16 @@ func (store *propertiesStore) Search(ctx context.Context, options domain.SearchO
 
 	if options.City != nil {
 		indexName = "CityIndex"
-		keyConditionExpression = "City = :city"
+		keyConditionExpression = "city = :city"
 	} else if options.Country != nil {
 		indexName = "CountryIndex"
-		keyConditionExpression = "Country = :country"
+		keyConditionExpression = "country = :country"
 	} else if options.Bedrooms != nil {
 		indexName = "BedroomsIndex"
-		keyConditionExpression = "Bedrooms = :bedrooms"
+		keyConditionExpression = "bedrooms = :bedrooms"
 	} else if options.Guests != nil {
 		indexName = "GuestsIndex"
-		keyConditionExpression = "Guests = :guests"
+		keyConditionExpression = "guests = :guests"
 	}
 
 	if options.City != nil {
@@ -56,19 +56,19 @@ func (store *propertiesStore) Search(ctx context.Context, options domain.SearchO
 	if options.Country != nil {
 		expressionAttributeValues[":country"] = &types.AttributeValueMemberS{Value: *options.Country}
 		if indexName != "CountryIndex" {
-			filterExpressions = append(filterExpressions, "Country = :country")
+			filterExpressions = append(filterExpressions, "country = :country")
 		}
 	}
 	if options.Bedrooms != nil {
 		expressionAttributeValues[":bedrooms"] = &types.AttributeValueMemberN{Value: strconv.Itoa(*options.Bedrooms)}
 		if indexName != "BedroomsIndex" {
-			filterExpressions = append(filterExpressions, "Bedrooms = :bedrooms")
+			filterExpressions = append(filterExpressions, "bedrooms = :bedrooms")
 		}
 	}
 	if options.Guests != nil {
 		expressionAttributeValues[":guests"] = &types.AttributeValueMemberN{Value: strconv.Itoa(*options.Guests)}
 		if indexName != "GuestsIndex" {
-			filterExpressions = append(filterExpressions, "Guests = :guests")
+			filterExpressions = append(filterExpressions, "guests = :guests")
 		}
 	}
 

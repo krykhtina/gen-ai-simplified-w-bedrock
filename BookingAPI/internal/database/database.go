@@ -14,6 +14,7 @@ import (
 const (
 	ErrorFailedToFetchRecord     = "failed to fetch record"
 	ErrorFailedToUnmarshalRecord = "failed to unmarshal record"
+	ErrorNotFound                = "not found"
 )
 
 type table struct {
@@ -48,7 +49,7 @@ func (t *table) getItem(ctx context.Context, key map[string]types.AttributeValue
 				return nil, nil
 			}
 		}
-		return nil, errors.New(ErrorFailedToFetchRecord)
+		return nil, err //errors.New(ErrorFailedToFetchRecord)
 	}
 
 	return result.Item, nil
@@ -116,4 +117,53 @@ func query[T any](ctx context.Context, indexName *string,
 		return nil, err //errors.New(ErrorFailedToUnmarshalRecord)
 	}
 	return result, nil
+}
+
+func (t *table) putItem(ctx context.Context, item map[string]types.AttributeValue) error {
+	input := dynamodb.PutItemInput{
+		Item:      item,
+		TableName: &t.tableName,
+	}
+
+	_, err := t.client.PutItem(ctx, &input)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func putItem[T any](ctx context.Context, item T, t *table) error {
+	itemMap, err := attributevalue.MarshalMapWithOptions(item,
+		func(opt *attributevalue.EncoderOptions) {
+			opt.TagKey = "json"
+		})
+	if err != nil {
+		return err
+	}
+	return t.putItem(ctx, itemMap)
+}
+
+func (t *table) deleteItem(ctx context.Context, key map[string]types.AttributeValue) error {
+
+	input := dynamodb.DeleteItemInput{
+		Key:       key,
+		TableName: &t.tableName,
+	}
+
+	// call the DeleteItem method to remove data from dynamoDB table.
+	_, err := t.client.DeleteItem(ctx, &input)
+
+	// Check if the result is nil or if there is any error during fetching the record.
+	if err != nil {
+		var apiErr smithy.APIError
+		if errors.As(err, &apiErr) {
+			switch apiErr.(type) {
+			case *types.ResourceNotFoundException:
+				return errors.New(ErrorNotFound)
+			}
+		}
+		return err //errors.New(ErrorFailedToRemoveRecord)
+	}
+
+	return nil
 }
