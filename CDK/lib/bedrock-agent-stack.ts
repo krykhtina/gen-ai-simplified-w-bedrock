@@ -1,15 +1,16 @@
 import { Stack, StackProps, aws_iam } from "aws-cdk-lib";
-import { Effect, PolicyDocument, PolicyStatement, Role, ServicePrincipal } from "aws-cdk-lib/aws-iam";
+import { Effect, PolicyDocument, PolicyStatement, Role } from "aws-cdk-lib/aws-iam";
 import { Construct } from "constructs";
 import { CfnAgent, CfnAgentAlias } from "aws-cdk-lib/aws-bedrock";
 import { resolve } from 'path';
 import { readFileSync } from "fs";
-import { Bucket } from "aws-cdk-lib/aws-s3";
-import { BucketDeployment, Source } from "aws-cdk-lib/aws-s3-deployment";
+import { NodejsFunction } from "aws-cdk-lib/aws-lambda-nodejs";
 
 export interface BedrockAgentStackProps extends StackProps {
     readonly namePrefix: string;
     readonly knowledgeBaseId: string;
+    readonly actionGroupProperties: CfnAgent.AgentActionGroupProperty;
+    readonly actionGroupSchemaArn: string;
   }
 
 export class BedrockAgentStack extends Stack {
@@ -58,37 +59,12 @@ export class BedrockAgentStack extends Stack {
             new PolicyStatement({
               effect: Effect.ALLOW,
               actions: [ 's3:GetObject'],
-              resources: ['arn:aws:s3:::bucket/path/to/schema'],
+              resources: [props.actionGroupSchemaArn],
             }),
           ],
         }),
       },
     });
-
-    const bucket = new Bucket(this, "AgentBucket");
-
-    // Upload schema to S3
-    new BucketDeployment(this, "Deployment", {
-      sources: [Source.asset("../BookingAPI/schema")],
-      destinationBucket: bucket,
-    });
-
-    const s3BucketName = bucket.bucketName;
-    const s3ObjectKey = "api.yaml";
-
-    const actionGroupProperties: CfnAgent.AgentActionGroupProperty = {
-        actionGroupName: 'Booking',
-        actionGroupExecutor: {
-          lambda: "APILambdaArn",
-        },
-        apiSchema: {
-          s3: {
-            s3BucketName: s3BucketName,
-            s3ObjectKey: s3ObjectKey,
-          }
-        },
-        description: 'This is an API that allows to book properties available on OMG Booking webside.',
-      };
 
 
     // https://docs.aws.amazon.com/cdk/api/v2/docs/aws-cdk-lib.aws_bedrock.CfnAgent.html
@@ -108,7 +84,7 @@ export class BedrockAgentStack extends Stack {
           knowledgeBaseState: 'ENABLED',
         },
       ],
-      // actionGroups: Add action broup here
+      actionGroups: [ props.actionGroupProperties ]
     });
 
     const agentAlias = new CfnAgentAlias(this,  `${props.namePrefix}-bedrock-agent-alias`, {

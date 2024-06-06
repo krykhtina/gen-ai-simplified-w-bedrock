@@ -4,6 +4,7 @@ import * as cdk from "aws-cdk-lib";
 import { OpenSearchStack } from "../lib/open-search-stack";
 import { KnowledgeBaseStack } from "../lib/knowladge-base-stack";
 import { BedrockAgentStack } from "../lib/bedrock-agent-stack";
+import { ActionGroupStack } from "../lib/action-group-stack";
 
 const environment = {
   account: "879331023346",
@@ -35,8 +36,14 @@ const knowledgeBaseStack = new KnowledgeBaseStack(app, getStackId("KnowledgeBase
   openSearchCollection: openSearchStack.openSearchCollection
 });
 
+const actionGroupStack = new ActionGroupStack(app, getStackId("ActionGroupStack"), {
+  env: environment,
+});
+
 new BedrockAgentStack(app, getStackId("BedrockAgentStack"), {
   env: environment,
   namePrefix: "gen-ai",
-  knowledgeBaseId: knowledgeBaseStack.knowledgeBaseId
+  knowledgeBaseId: knowledgeBaseStack.knowledgeBaseId,
+  actionGroupProperties: actionGroupStack.actionGroupProperties,
+  actionGroupSchemaArn: actionGroupStack.actionGroupSchemaArn
 });
