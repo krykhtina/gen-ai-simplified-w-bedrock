@@ -72,11 +72,11 @@ export const handler: Handler = async (event) => {
         
         apiResponse = await axios.post(url, {
             ...(customerName && {customerName: customerName}),
-            ...(propertyId && {propertyId: propertyId}),
-            ...(contactDetails && {contactDetails: contactDetails}),
+            ...(propertyId && {propertyId: parseInt(propertyId)}),
+            ...(contactDetails && {contactDetails: JSON.parse(contactDetails)}),
             ...(endDate && {endDate: endDate}),
             ...(startDate && {startDate: startDate}),
-            ...(paymentInformation && {paymentInformation: paymentInformation}),
+            ...(paymentInformation && {paymentInformation: JSON.parse(paymentInformation)}),
         }).then((response: any) => {
             console.log(`API response: ${response.data}`);
             return response.data;
