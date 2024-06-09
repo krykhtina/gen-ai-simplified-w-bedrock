@@ -5,6 +5,7 @@ import { Bucket } from "aws-cdk-lib/aws-s3";
 import { BucketDeployment, Source } from "aws-cdk-lib/aws-s3-deployment";
 import { NodejsFunction } from "aws-cdk-lib/aws-lambda-nodejs";
 import { Runtime } from "aws-cdk-lib/aws-lambda";
+import { ServicePrincipal } from "aws-cdk-lib/aws-iam";
 
 export class ActionGroupStack extends Stack {
     readonly actionGroupProperties: CfnAgent.AgentActionGroupProperty;
@@ -35,6 +36,12 @@ export class ActionGroupStack extends Stack {
           timeout: Duration.minutes(15),
         }
       );
+
+      actionGroupLambda.addPermission('BedrockPermission', {
+        principal: new ServicePrincipal('bedrock.amazonaws.com'),
+        action: 'lambda:InvokeFunction'
+        });
+
 
       this.actionGroupProperties = {
         actionGroupName: 'Booking',
