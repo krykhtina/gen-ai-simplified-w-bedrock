@@ -44,7 +44,7 @@ class BedrockAgentClientWrapper:
             )
 
             completion = ""
-            for event in response.get("completion"):
+            for event in response.get("completion", []):
                 chunk = event["chunk"]
                 completion += chunk["bytes"].decode()
 
@@ -69,9 +69,9 @@ class BedrockAgentClientWrapper:
             "Conversation history:"
         ]
         for message in message_history:
-            role = message["role"]
+            role = "User" if message["role"] == "user" else "Assistant"
             content = message["content"]
-            conversation_lines.append(f"{role.capitalize()}: {content}")
+            conversation_lines.append(f"{role}: {content}")
 
         conversation_lines.append("New user prompt:")
         conversation_lines.append(f"User: {prompt}")
