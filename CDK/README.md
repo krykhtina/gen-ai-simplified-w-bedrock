@@ -11,6 +11,21 @@ This project leverages AWS CDK (Cloud Development Kit) to deploy an infrastructu
 * `cdk diff`    compare deployed stack with current state
 * `cdk synth`   emits the synthesized CloudFormation template
 
+### AWS Configuration:
+
+Ensure that your AWS credentials are configured. You can set them up using the AWS CLI:
+
+```sh
+aws configure
+```
+
+Alternatively, you can set the environment variables:
+
+```sh
+export AWS_ACCESS_KEY_ID=your_access_key_id
+export AWS_SECRET_ACCESS_KEY=your_secret_access_key
+export AWS_DEFAULT_REGION=your_region
+```
 
 ## Install dependencies:
 
@@ -29,7 +44,7 @@ cdk bootstrap
 ### Deploy the DynamoDB Stack:
 
 ```sh
-cdk deploy
+cdk deploy --all
 ```
 
 ## Stack Details

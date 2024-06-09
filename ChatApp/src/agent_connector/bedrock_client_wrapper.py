@@ -65,7 +65,7 @@ class BedrockAgentClientWrapper:
         :return: A formatted string representing the entire conversation.
         """
         conversation_lines = [
-            f"Your assistant Role: {assistant_role}",
+            f"Your assistant role: {assistant_role}. Focus on helping the user with booking tasks. Provide brief, direct responses and avoid unnecessary small talk.",
             "Conversation history:"
         ]
         for message in message_history:
