@@ -54,7 +54,8 @@ export class ActionGroupStack extends Stack {
             s3ObjectKey: s3ObjectKey,
           }
         },
-        description: 'This is an API that allows to book properties available on OMG Booking webside.',
+        description: "This is an API that allows to search for properties and rooms, book them, check availability and cancel bookings." +
+        "Call to it should not be made untill all params are collected.",
       };
     }
 }
