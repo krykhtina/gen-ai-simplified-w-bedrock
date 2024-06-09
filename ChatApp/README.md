@@ -35,17 +35,12 @@ This project is a web application built with Python that leverages Boto3's Bedro
     pip install pipenv
     ```
 
-3. Create a virtual environment and install dependencies:
+3. Install dependencies:
 
     ```sh
     pipenv install
     ```
 
-4. Activate the virtual environment:
-
-    ```sh
-    pipenv shell
-    ```
 
 ## Configuration
 
@@ -89,7 +84,7 @@ This project is a web application built with Python that leverages Boto3's Bedro
 
 ## License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+This project is licensed under the MIT License.
 
 ## Contact
 
