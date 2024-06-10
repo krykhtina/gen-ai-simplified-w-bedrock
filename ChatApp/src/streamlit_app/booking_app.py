@@ -1,3 +1,4 @@
+import logging
 import uuid
 import random
 import streamlit as st
@@ -10,6 +11,7 @@ APP_TITLE = "Your amazing Booking app"
 # User-related constants
 USER_ROLE = "user"
 USER_AVATAR = "🧑"
+
 
 class BookingApp:
     def __init__(self):
@@ -81,20 +83,49 @@ class BookingApp:
             st.write(end_message)
             return self.agent_service.end_chat(self.session_id, st.session_state["messages"])
 
-        # Randomly select a prompt instruction specific to the assistant
-        instruction = random.choice(assistant.get_assistant_instructions())
+        # Format the conversation into the payload structure
+        payload = self.format_conversation(st.session_state["messages"], prompt, assistant)
 
-        # Combine the instruction with the user's prompt
-        engineered_prompt = f"\n{prompt}. \n {instruction}"
+        # Pass the payload to the agent service
+        response = self.agent_service.chat(self.session_id, payload)
+        return response.replace("<REDACTED>", "Booking")
 
-        # Pass the full conversation history and engineered prompt to the agent service
-        return self.agent_service.chat(self.session_id, engineered_prompt, st.session_state["messages"], assistant.get_assistant_role())
+    @staticmethod
+    def format_conversation(message_history, prompt, assistant: RandomAssistant) -> dict:
+        """
+        Formats the conversation history and the current prompt into a dictionary for the payload.
+
+        :param message_history: List of dictionaries representing the conversation history.
+        :param prompt: The current user prompt.
+        :param assistant_role: The role of the assistant to emulate.
+        :return: A dictionary representing the entire conversation payload.
+        """
+        logging.debug(f"message history:  \n {message_history}")
+
+        instructions = (
+            "Be empathetic and helpful. Provide clear instructions. Be very short in your answers. "
+            # f"This is your message intro: {assistant.get_assistant_intro()}"
+            f"{assistant.get_role_instructions()}"
+            f"{assistant.get_random_prompt()}"
+        )
+
+        # Append the current prompt to the conversation history
+        formatted_history = message_history + [{"role": "user", "content": prompt}]
+
+        payload = {
+            "context": assistant.get_context(),
+            "history": formatted_history,
+            "instructions": instructions
+        }
+
+        return payload
 
     def launch(self):
         """Launch the Streamlit app."""
         st.title(APP_TITLE)
         self.display_chat_history()
         self.handle_user_input()
+
 
 # Run the app
 if __name__ == "__main__":

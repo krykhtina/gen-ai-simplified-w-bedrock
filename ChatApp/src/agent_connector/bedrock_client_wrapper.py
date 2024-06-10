@@ -1,3 +1,4 @@
+import json
 import logging
 from botocore.exceptions import ClientError
 
@@ -14,7 +15,7 @@ class BedrockAgentClientWrapper:
         """
         self.client = client
 
-    def execute_request(self, agent_id, agent_alias_id, session_id, prompt, message_history, assistant_role, end_session=False):
+    def execute_request(self, agent_id, agent_alias_id, session_id, payload, end_session=False):
         """
         Sends a prompt for the agent to process and respond to.
 
@@ -23,25 +24,23 @@ class BedrockAgentClientWrapper:
         :param session_id: The unique identifier of the session. Use the same value across requests
                            to continue the same conversation.
         :param prompt: The prompt that you want the agent to complete.
-        :param message_history: List of dictionaries representing the conversation history.
-        :param assistant_role: The role of the assistant to emulate.
         :param end_session: Boolean indicating whether to end the session.
         :return: Inference response from the model.
         """
-
-        # Combine message history and the current prompt
-        formatted_conversation = self.format_conversation(message_history, prompt, assistant_role)
-        logger.debug("formatted_conversation: " + formatted_conversation)
+        input_text = json.dumps(payload)
+        logger.debug("Prompt: " + input_text)
 
         try:
             response = self.client.invoke_agent(
                 agentId=agent_id,
                 agentAliasId=agent_alias_id,
                 sessionId=session_id,
-                inputText=formatted_conversation,
+                inputText=input_text,
                 endSession=end_session,
                 # enableTrace=True
             )
+
+            logging.debug(f"\n Response from agent: {response}")
 
             completion = ""
             for event in response.get("completion", []):
@@ -53,28 +52,3 @@ class BedrockAgentClientWrapper:
             raise
 
         return completion
-
-    @staticmethod
-    def format_conversation(message_history, prompt, assistant_role):
-        """
-        Formats the conversation history and the current prompt into a single string.
-
-        :param message_history: List of dictionaries representing the conversation history.
-        :param prompt: The current user prompt.
-        :param assistant_role: The role of the assistant to emulate.
-        :return: A formatted string representing the entire conversation.
-        """
-        conversation_lines = [
-            f"Your assistant role: {assistant_role}. Focus on helping the user with booking tasks. Provide brief, direct responses and avoid unnecessary small talk.",
-            "Conversation history:"
-        ]
-        for message in message_history:
-            role = "User" if message["role"] == "user" else "Assistant"
-            content = message["content"]
-            conversation_lines.append(f"{role}: {content}")
-
-        conversation_lines.append("New user prompt:")
-        conversation_lines.append(f"User: {prompt}")
-
-        formatted_conversation = "\n".join(conversation_lines)
-        return formatted_conversation
