@@ -13,6 +13,7 @@ export const handler: Handler = async (event) => {
     if (apiPath === '/properties') {
         console.log('Processing /properties endpoint');
         const propertyId = event.parameters[0]?.value;
+        console.log(`Parameters: propertyId=${propertyId}`);
         const url = `${baseUrl}/properties/${propertyId}`;
         console.log(`Calling API with URL: ${url}`);
 
@@ -28,6 +29,7 @@ export const handler: Handler = async (event) => {
         const propertyId = event.parameters[0]?.value || undefined;
         const endDate = event.parameters[1]?.value || undefined;
         const startDate = event.parameters[2]?.value || undefined;
+        console.log(`Parameters: propertyId=${propertyId}, endDate=${endDate}, startDate=${startDate}`);
         const url = `${baseUrl}/properties/${propertyId}/availability`;
         console.log(`Calling API with URL: ${url}`);
 
@@ -52,6 +54,7 @@ export const handler: Handler = async (event) => {
             const guests = properties[1]?.value || undefined;
             const country = properties[2]?.value || undefined;
             const bedrooms = properties[3]?.value || undefined;
+            console.log(`Parameters: city=${city}, guests=${guests}, country=${country}, bedrooms=${bedrooms}`);
             const url = `${baseUrl}/properties/search`;
             console.log(`Calling API with URL: ${url}`);
 
@@ -80,6 +83,7 @@ export const handler: Handler = async (event) => {
         const endDate = properties[3]?.value || undefined;
         const startDate = properties[4]?.value || undefined;
         let paymentInformation = properties[5]?.value || undefined;
+        console.log(`Parameters: customerName=${customerName}, propertyId=${propertyId}, endDate=${endDate}, startDate=${startDate}`);
 
         if (paymentInformation.includes("</")) {
             console.log('Parsing paymentInformation as XML');
@@ -133,6 +137,7 @@ export const handler: Handler = async (event) => {
     } else if (apiPath === '/booking') {
         console.log('Processing /booking endpoint');
         const bookingId = event.parameters[0]?.value;
+        console.log(`Parameters: bookingId=${bookingId}`);
         const url = `${baseUrl}/booking/${bookingId}`;
         console.log(`Calling API with URL: ${url}`);
 
