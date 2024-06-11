@@ -51,6 +51,7 @@ paths:
       parameters:
         - in: path
           name: propertyId
+          description: Id of the property.
           required: true
           schema:
             type: integer
@@ -80,17 +81,20 @@ paths:
       parameters:
         - in: path
           name: propertyId
+          description: Id of the property.
           required: true
           schema:
             type: integer
         - in: query
           name: startDate
+          description: The date since which the stay will start.
           required: true
           schema:
             type: string
             format: date
         - in: query
           name: endDate
+          description: The date till which the stay will last.
           required: true
           schema:
             type: string
