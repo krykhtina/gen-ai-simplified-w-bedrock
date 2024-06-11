@@ -3,6 +3,7 @@ package main
 import (
 	"booking/configuration"
 	"booking/internal/database"
+	"booking/internal/domain"
 	"booking/internal/service/bookings"
 	"booking/internal/transport"
 	"context"
@@ -75,7 +76,13 @@ func handler(ctx context.Context, request Request) (*Response, error) {
 
 	availability, err := service.GetAvailability(ctx, propertyId, startDate, endDate)
 	if err != nil {
-		return nil, err
+		switch err {
+		case domain.ErrPropertyNotFound:
+			return transport.Response(http.StatusNotFound,
+				transport.ErrorBody{"Property not found"})
+		default:
+			return nil, err
+		}
 	}
 
 	return transport.Response(http.StatusOK, availability)

@@ -3,6 +3,7 @@ package database
 import (
 	"context"
 	"errors"
+	"log"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/feature/dynamodb/attributevalue"
@@ -14,6 +15,7 @@ import (
 const (
 	ErrorFailedToFetchRecord     = "failed to fetch record"
 	ErrorFailedToUnmarshalRecord = "failed to unmarshal record"
+	ErrorFailedToRemoveRecord    = "failed to remove record"
 	ErrorNotFound                = "not found"
 )
 
@@ -49,7 +51,8 @@ func (t *table) getItem(ctx context.Context, key map[string]types.AttributeValue
 				return nil, nil
 			}
 		}
-		return nil, err //errors.New(ErrorFailedToFetchRecord)
+		log.Println(err)
+		return nil, errors.New(ErrorFailedToFetchRecord)
 	}
 
 	return result.Item, nil
@@ -67,7 +70,8 @@ func getItem[T any](ctx context.Context, key map[string]types.AttributeValue, t 
 	err = attributevalue.UnmarshalMap(item, result)
 
 	if err != nil {
-		return nil, err //errors.New(ErrorFailedToUnmarshalRecord)
+		log.Println(err)
+		return nil, errors.New(ErrorFailedToUnmarshalRecord)
 	}
 	return result, nil
 }
@@ -90,7 +94,8 @@ func (t *table) query(ctx context.Context, indexName *string,
 
 	// Check if the result is nil or if there is any error during fetching the record.
 	if err != nil {
-		return nil, err //errors.New(ErrorFailedToFetchRecord)
+		log.Println(err)
+		return nil, errors.New(ErrorFailedToFetchRecord)
 	}
 
 	return result.Items, nil
@@ -105,6 +110,7 @@ func query[T any](ctx context.Context, indexName *string,
 	item, err := t.query(ctx, indexName, keyConditionExpression,
 		filterExpression, expressionAttributeValues)
 	if err != nil {
+		log.Println(err)
 		return nil, err
 	} else if item == nil {
 		return nil, nil
@@ -114,7 +120,8 @@ func query[T any](ctx context.Context, indexName *string,
 	err = attributevalue.UnmarshalListOfMaps(item, &result)
 
 	if err != nil {
-		return nil, err //errors.New(ErrorFailedToUnmarshalRecord)
+		log.Println(err)
+		return nil, errors.New(ErrorFailedToUnmarshalRecord)
 	}
 	return result, nil
 }
@@ -127,6 +134,7 @@ func (t *table) putItem(ctx context.Context, item map[string]types.AttributeValu
 
 	_, err := t.client.PutItem(ctx, &input)
 	if err != nil {
+		log.Println(err)
 		return err
 	}
 	return nil
@@ -138,6 +146,7 @@ func putItem[T any](ctx context.Context, item T, t *table) error {
 			opt.TagKey = "json"
 		})
 	if err != nil {
+		log.Println(err)
 		return err
 	}
 	return t.putItem(ctx, itemMap)
@@ -162,7 +171,8 @@ func (t *table) deleteItem(ctx context.Context, key map[string]types.AttributeVa
 				return errors.New(ErrorNotFound)
 			}
 		}
-		return err //errors.New(ErrorFailedToRemoveRecord)
+		log.Println(err)
+		return errors.New(ErrorFailedToRemoveRecord)
 	}
 
 	return nil
