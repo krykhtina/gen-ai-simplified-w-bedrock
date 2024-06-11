@@ -1,5 +1,7 @@
 import axios from "axios";
 import { Handler } from 'aws-lambda';
+import { parseString } from "xml2js";  
+
 
 export const handler: Handler = async (event) => {
     console.log('EVENT: \n' + JSON.stringify(event, null, 2));
@@ -29,7 +31,7 @@ export const handler: Handler = async (event) => {
         
         apiResponse = await axios.get(url, {
 			params: {
-                ...(propertyId && {propertyId: propertyId}),
+                ...(propertyId && {propertyId: Number.isInteger(propertyId)? propertyId: parseInt(propertyId)}),
                 ...(endDate && {endDate: endDate}),
                 ...(startDate && {startDate: startDate}),
 			}
@@ -41,42 +43,50 @@ export const handler: Handler = async (event) => {
             return "Call to the API failed."
         });
     } else if (apiPath == '/properties/search')  {
-        const properties = event.requestBody.content["application/json"].properties;
-        const city = properties[0]?.value || undefined;
-        const guests = properties[1]?.value || undefined;
-        const country = properties[2]?.value || undefined;
-        const bedrooms = properties[3]?.value || undefined;
-        const url = `${baseUrl}/properties/search`;
-        
-        apiResponse = await axios.post(url, {
-            ...(city && {city: city}),
-            ...(country && {country: country}),
-            ...(bedrooms && {bedrooms: bedrooms}),
-            ...(guests && {guests: guests}),
-        }).then((response: any) => {
-            console.log(`API response: ${response.data}`);
-            return response.data;
-        }).catch((error: any) => {
-            console.log(`Call to API failed, error: ${error}`)
-            return "Call to the API failed."
-        });
+        const properties = event?.requestBody?.content["application/json"]?.properties || undefined;
+        if(properties) {
+            const city = properties[0]?.value || undefined;
+            const guests = properties[1]?.value || undefined;
+            const country = properties[2]?.value || undefined;
+            const bedrooms = properties[3]?.value || undefined;
+            const url = `${baseUrl}/properties/search`;
+            
+            apiResponse = await axios.post(url, {
+                ...(city && {city: city}),
+                ...(country && {country: country}),
+                ...(bedrooms && {bedrooms: Number.isInteger(bedrooms)? bedrooms: parseInt(bedrooms)}),
+                ...(guests && {guests:  Number.isInteger(guests)? bedrooms: parseInt(guests)}),
+            }).then((response: any) => {
+                console.log(`API response: ${response.data}`);
+                return response.data;
+            }).catch((error: any) => {
+                console.log(`Call to API failed, error: ${error}`)
+                return "Call to the API failed."
+            });
+        } else {
+            "Additinal parameters are required for this call."
+        }
     } else if (apiPath == '/bookings')  {
         const properties = event.requestBody.content["application/json"].properties;
         const customerName = properties[0]?.value || undefined;
         const propertyId = properties[1]?.value || undefined;
-        const contactDetails = properties[2]?.value || undefined;
+        let contactDetails = properties[2]?.value || undefined;
         const endDate = properties[3]?.value || undefined;
         const startDate = properties[4]?.value || undefined;
-        const paymentInformation = properties[5]?.value || undefined;
+        let paymentInformation = properties[5]?.value || undefined;
+        paymentInformation = paymentInformation.includes("</")? 
+        await parseString(`<paymentInformation>${paymentInformation}</paymentInformation>`, (_, results) => results["paymentInformation"]) : JSON.parse(paymentInformation);
+        contactDetails = contactDetails.includes("</")? 
+        await parseString(`<contactDetails>${contactDetails}</contactDetails>`, (_, results) => results["contactDetails"]) : JSON.parse(contactDetails);
         const url = `${baseUrl}/bookings`;
         
         apiResponse = await axios.post(url, {
             ...(customerName && {customerName: customerName}),
-            ...(propertyId && {propertyId: parseInt(propertyId)}),
-            ...(contactDetails && {contactDetails: JSON.parse(contactDetails)}),
+            ...(propertyId && {propertyId:  Number.isInteger(propertyId)? propertyId: parseInt(propertyId)}),
+            ...(contactDetails && {contactDetails: contactDetails}),
             ...(endDate && {endDate: endDate}),
             ...(startDate && {startDate: startDate}),
-            ...(paymentInformation && {paymentInformation: JSON.parse(paymentInformation)}),
+            ...(paymentInformation && {paymentInformation: paymentInformation }),
         }).then((response: any) => {
             console.log(`API response: ${response.data}`);
             return response.data;
