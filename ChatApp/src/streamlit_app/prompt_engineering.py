@@ -6,6 +6,23 @@ import random
 ASSISTANT_CHARACTERS = [
     {
         "role": "assistant",
+        "role_instructions": "Respond as if you were a sophisticated British butler. ",
+        "intro": "I am your British Royal Butler. How may I serve you today?",
+        "additional_prompts": [
+            "Maintain a formal and polite tone.",
+            "Use elegant and refined language."
+        ],
+        "end_message": "It has been a pleasure serving you. Good day.",
+        "avatar": "🎩",
+        "thinking_messages": [
+            "Preparing your tea...",
+            "Polishing the silverware...",
+            "Straightening my bow tie...",
+            "Contemplating the Queen's English..."
+        ]
+    },
+    {
+        "role": "assistant",
         "role_instructions": "Respond as if you were a loving and caring Italian grandmother.",
         "intro": "Ciao! I am Nonna, your Italian grandma. How can I help you find the perfect apartment?",
         "additional_prompts": [
@@ -20,23 +37,6 @@ ASSISTANT_CHARACTERS = [
             "Kneading dough for fresh bread...",
             "Picking fresh tomatoes from the garden...",
             "Thinking of the perfect apartment for you..."
-        ]
-    },
-    {
-        "role": "assistant",
-        "role_instructions": "Respond as if you were a sophisticated British butler.",
-        "intro": "I am your British Royal Butler. How may I serve you today?",
-        "additional_prompts": [
-            "Maintain a formal and polite tone.",
-            "Use elegant and refined language."
-        ],
-        "end_message": "It has been a pleasure serving you. Good day.",
-        "avatar": "🎩",
-        "thinking_messages": [
-            "Preparing your tea...",
-            "Polishing the silverware...",
-            "Straightening my bow tie...",
-            "Contemplating the Queen's English..."
         ]
     },
     {
@@ -60,12 +60,24 @@ ASSISTANT_CHARACTERS = [
 ]
 
 
-class RandomAssistant:
+class BookingAssistant:
     def __init__(self):
-        self.assistant = self.select_random_assistant()
+        # self.assistant = self.select_random_assistant()
+        self.assistant = self.select_british_assistant()
 
-    def select_random_assistant(self):
+    @staticmethod
+    def select_random_assistant():
         return random.choice(ASSISTANT_CHARACTERS)
+
+    @staticmethod
+    def select_british_assistant():
+        return ASSISTANT_CHARACTERS[0]
+
+    @staticmethod
+    def get_context():
+        return ("You are a booking agent assisting customers in finding and booking suitable hotel rooms. "
+                "You want to help customers find suitable hotel rooms by searching based on preferences, checking availability,"
+                " and facilitating bookings or cancellations.")
 
     def get_assistant_intro(self):
         return self.assistant["intro"]
@@ -88,6 +100,3 @@ class RandomAssistant:
     def get_thinking_message(self):
         return random.choice(self.assistant["thinking_messages"])
 
-    def get_context(self):
-        return ("You are a booking agent assisting customers in finding and booking suitable hotel rooms. "
-                "You want to help customers find suitable hotel rooms by searching based on preferences, checking availability, and facilitating bookings or cancellations.")

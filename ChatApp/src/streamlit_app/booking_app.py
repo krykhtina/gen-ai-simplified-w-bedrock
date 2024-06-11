@@ -1,9 +1,10 @@
 import logging
 import uuid
-import random
+
 import streamlit as st
+
 from agent_connector.bedrock_agent_service import BedrockAgentService
-from streamlit_app.prompt_engineering import RandomAssistant
+from streamlit_app.prompt_engineering import BookingAssistant
 
 # Dialog-related Constants
 END_PROMPT = "end"
@@ -21,7 +22,8 @@ class BookingApp:
         self.initialize_assistant()
         self.initialize_session()
 
-    def load_config(self):
+    @staticmethod
+    def load_config():
         """Load configuration from Streamlit secrets."""
         return {
             "bedrock_agent_id": st.secrets["bedrock_agent_id"],
@@ -29,12 +31,14 @@ class BookingApp:
             "region": st.secrets["region"]
         }
 
-    def initialize_assistant(self):
+    @staticmethod
+    def initialize_assistant():
         """Initialize the assistant and store it in the session state if not already done."""
         if "assistant" not in st.session_state:
-            st.session_state["assistant"] = RandomAssistant()
+            st.session_state["assistant"] = BookingAssistant()
 
-    def get_assistant(self):
+    @staticmethod
+    def get_assistant():
         """Get the assistant from the session state."""
         return st.session_state["assistant"]
 
@@ -71,7 +75,8 @@ class BookingApp:
                 st.markdown(response)
                 st.session_state["messages"].append({"role": assistant.get_assistant_role(), "content": response})
 
-    def add_message(self, role, content):
+    @staticmethod
+    def add_message(role, content):
         """Add a message to the chat history."""
         st.session_state["messages"].append({"role": role, "content": content})
 
@@ -81,20 +86,22 @@ class BookingApp:
         if prompt.lower() == END_PROMPT:
             end_message = assistant.get_assistant_end_message()
             st.write(end_message)
-            return self.agent_service.end_chat(self.session_id, st.session_state["messages"])
+            return self.agent_service.end_chat(self.session_id)
 
         # Format the conversation into the payload structure
         payload = self.format_conversation(st.session_state["messages"], prompt, assistant)
 
         # Pass the payload to the agent service
-        response = self.agent_service.chat(self.session_id, payload)
-        return response.replace("<REDACTED>", "Booking")
+        return self.agent_service.chat(self.session_id, payload)
+
+
 
     @staticmethod
-    def format_conversation(message_history, prompt, assistant: RandomAssistant) -> dict:
+    def format_conversation(message_history, prompt, assistant: BookingAssistant) -> dict:
         """
         Formats the conversation history and the current prompt into a dictionary for the payload.
 
+        :param assistant: Assistant
         :param message_history: List of dictionaries representing the conversation history.
         :param prompt: The current user prompt.
         :param assistant_role: The role of the assistant to emulate.
@@ -104,7 +111,6 @@ class BookingApp:
 
         instructions = (
             "Be empathetic and helpful. Provide clear instructions. Be very short in your answers. "
-            # f"This is your message intro: {assistant.get_assistant_intro()}"
             f"{assistant.get_role_instructions()}"
             f"{assistant.get_random_prompt()}"
         )
