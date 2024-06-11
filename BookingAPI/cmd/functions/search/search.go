@@ -44,7 +44,13 @@ func handler(ctx context.Context, request Request) (*Response, error) {
 
 	properties, err := service.Search(ctx, *options)
 	if err != nil {
-		return nil, err
+		switch err {
+		case domain.ErrPropertyNotFound:
+			return transport.Response(http.StatusNotFound,
+				transport.ErrorBody{"Property not found"})
+		default:
+			return nil, err
+		}
 	}
 
 	return transport.Response(http.StatusOK, properties)
