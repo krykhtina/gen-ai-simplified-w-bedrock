@@ -78,7 +78,8 @@ class BookingAssistant:
         return ("You are a booking agent assisting customers in finding and booking suitable hotel rooms. "
                 "You want to help customers find suitable hotel rooms by searching based on dates, preferences, checking availability,"
                 " and facilitating bookings or cancellations. Don't forget to ask about location and dates of staying first."
-                "Don't book anything until you have all customer's data, which includes name, contact info, card info.")
+                "Remember to ask for name, contact info and card info. "
+                "Store propertyId in memory.")
 
     def get_assistant_intro(self):
         return self.assistant["intro"]
