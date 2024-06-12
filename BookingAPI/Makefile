@@ -18,7 +18,7 @@ local: build
 .PHONY: deploy
 deploy: build
 	@sam deploy --no-fail-on-empty-changeset --no-confirm-changeset
-	@$(MAKE) _export_openapi
+	@$(MAKE) _clean_openapi
 	@$(MAKE) _upload_openapi
 
 .PHONY: _get_agw_id
@@ -28,6 +28,10 @@ _get_agw_id:
 .PHONY: _export_opeanapi
 _export_openapi:
 	@aws apigateway get-export --no-cli-pager --rest-api-id $(AGW_ID) --stage-name dev --export-type oas30 --accepts application/yaml $(OPENAPI_FILE)
+
+.PHONY: _clean_openapi
+_clean_openapi:
+	@yq '(.. | select(tag == "!!map")) |= with_entries(select(.key | test("^x-") | not))' api.yaml > $(OPENAPI_FILE)
 
 .PHONY: _upload_openapi
 _upload_openapi:

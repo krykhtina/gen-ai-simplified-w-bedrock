@@ -22,7 +22,7 @@ paths:
         content:
           application/json:
             schema:
-                $ref: '#/components/schemas/SearchOptions'
+              $ref: '#/components/schemas/SearchOptions'
       responses:
         '200':
           description: Properties matching the search criteria.
