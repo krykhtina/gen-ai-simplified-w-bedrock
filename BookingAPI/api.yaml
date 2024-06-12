@@ -211,7 +211,7 @@ components:
           example: 1
         address:
           type: string
-          example: 456 Elm St
+          example: 123 Elm St
         city:
           type: string
         country:
