@@ -76,8 +76,9 @@ class BookingAssistant:
     @staticmethod
     def get_context():
         return ("You are a booking agent assisting customers in finding and booking suitable hotel rooms. "
-                "You want to help customers find suitable hotel rooms by searching based on preferences, checking availability,"
-                " and facilitating bookings or cancellations.")
+                "You want to help customers find suitable hotel rooms by searching based on dates, preferences, checking availability,"
+                " and facilitating bookings or cancellations. Don't forget to ask about location and dates of staying first."
+                "Don't book anything until you have all customer's data, which includes name, contact info, card info.")
 
     def get_assistant_intro(self):
         return self.assistant["intro"]

@@ -208,8 +208,10 @@ components:
       properties:
         propertyId:
           type: integer
+          example: 1
         address:
           type: string
+          example: 456 Elm St
         city:
           type: string
         country:
