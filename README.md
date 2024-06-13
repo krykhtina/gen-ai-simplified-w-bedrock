@@ -4,15 +4,15 @@
 
 
 ## Project description
-This project contains an implementation of the "OMG booking Chatbot". The chatbot is responsible for proving knowladge about rental properties, details like emergency procedures, security, rules, utilities, decor, location, local area description and others. It can also assist the user with booking prcedures by checking the avalability and making the final reservation. It is characterized to act as a British buttler to enhance the experience and make it more interesting. 
-
+This project contains an implementation of the "OMG booking Chat bot". The chat bot is responsible for proving knowladge about rental properties, details like emergency procedures, security, rules, utilities, decor, location, local area description and others. It can also assist the user with booking procedures by checking the availability and making the final reservation. It is characterized to act as a British butler to enhance the experience and make it more interesting. 
 Project consists of three parts: 
-- Infrastructure (CDK) - We use CDK, infrastructure as code, to provide all the necessary infrastructure elements like: knowladge base, action group, agent and necessary permissions. Building it this way makes the project more reliable but albo a bit more difficult so later we provide resoures explaining how to do it using AWS Console.
-- Booking API - an implementation of the api responsible for booking. It's separarated from the rest of the project as the Agent architecture allows you to use any API (for e.g. some open source APIs) so we decided to build it in separation
-- Chat App - frontend part of the project build using Streamlit. Here we build the chat initerface and using prompt engineering we give our assistant a character of a British buttler 
+- Infrastructure (CDK) - We use CDK, infrastructure as code, to provide all the necessary infrastructure elements like: knowledge base, action group, agent and necessary permissions. Building it this way makes the project more reliable but also a bit more difficult so later we provide resources explaining how to do it using AWS Console.
+- Booking API - an implementation of the api responsible for booking. It's separated from the rest of the project as the Agent architecture allows you to use any API (for e.g. some open source APIs) so we decided to build it in separation
+- Chat App - frontend part of the project build using Streamlit. Here we build the chat interface and using prompt engineering we give our assistant a character of a British butler 
 
 
 ## Setup
+> This README contains general setup but in each subfolder you fill find separate READMEs with more details on each part of the project.
 ### Prerequisites
 - AWS CDK Toolkit (cdk command)
 
@@ -51,9 +51,24 @@ npm run build
 
 >Before the  next step configure AWS accoring to AWS Configuration section and make sure you enabled model access in Bedrock
 
-Deploy the infrastructure
+Deploy the stack that will index your data. This step is necessary for the knowladge base 
 ```sh
-cdk deploy all
+cdk deploy OpenSearchStack-GenAISimplified-879331023346-us-west-2
+```
+
+Deploy the knowladge base
+```sh
+cdk deploy KnowledgeBaseStack-GenAISimplified-879331023346-us-west-2
+```
+
+Deploy action group stack. If you plan to use different API you nee to provide new OpenAPI schema in `CDK/lib/bookingApi/schema`. This is the main soure of knowladge about your API for the Agent so make sure to provide all the descriptions and examples possible.
+```sh
+cdk deploy ActionGroupStack-GenAISimplified-879331023346-us-west-2
+```
+
+Deploy final agent stack
+```sh
+cdk deploy BedrockAgentStack-GenAISimplified-879331023346-us-west-2
 ```
     
 ### Setup ChatApp:
@@ -73,16 +88,6 @@ Install dependencies:
 ```sh
 pipenv install
 ```
-
-
-## Useful CDK commands
-
-* `npm run build`   compile typescript to js
-* `cdk deploy <stack-name>`    deploy selected stack to your default AWS account/region
-* `cdk deploy all` deploy all the stacksto your default AWS account/region
-* `cdk diff` compare deployed stack with current state
-* `cdk synth` emits the synthesized CloudFormation template
-
 
 ## Configuration
 
@@ -123,6 +128,15 @@ pipenv install
 2. Open your web browser and navigate to `http://localhost:8501` to access the application.
 
 3. Use the interface to interact with the Bedrock API.
+
+## Useful CDK commands
+
+* `npm run build`   compile typescript to js
+* `cdk deploy <stack-name>`    deploy selected stack to your default AWS account/region
+* `cdk deploy all` deploy all the stacksto your default AWS account/region
+* `cdk diff` compare deployed stack with current state
+* `cdk synth` emits the synthesized CloudFormation template
+
 
 ## License
 

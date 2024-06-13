@@ -18,7 +18,7 @@ export class ActionGroupStack extends Stack {
 
     // Upload schema to S3
     new BucketDeployment(this, "Deployment", {
-      sources: [Source.asset("../BookingAPI/schema")],
+      sources: [Source.asset("./lib/bookingApi/schema")],
       destinationBucket: bucket,
     });
 

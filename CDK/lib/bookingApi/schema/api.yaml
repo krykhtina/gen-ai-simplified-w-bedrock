@@ -1,0 +1,335 @@
+openapi: 3.0.3
+info:
+  title: Property Booking API
+  description: API for finding and booking suitable property based on customer preferences and needs.
+  version: 1.0.0
+
+x-amazon-apigateway-request-validators:
+  all:
+    validateRequestBody: true
+    validateRequestParameters: true
+x-amazon-apigateway-request-validator: all
+
+paths:
+
+  /properties/search:
+    post:
+      summary: Search properties based on preferences
+      description: Search for properties that match the given preferences.
+      requestBody:
+        description: Preferences for searching properties
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SearchOptions'
+      responses:
+        '200':
+          description: Properties matching the search criteria.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Property'
+        '400':
+          description: Invalid search parameters.
+        '500':
+          description: Server error.
+      x-amazon-apigateway-integration:
+        uri:
+          Fn::Sub: arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${SearchFunction.Arn}/invocations
+        httpMethod: POST
+        type: aws_proxy
+        passthroughBehavior: "when_no_match"
+        payloadFormatVersion: "1.0"
+
+  /properties/{propertyId}:
+    get:
+      summary: Get details of a specific property
+      description: Retrieve details of a property by its ID.
+      parameters:
+        - in: path
+          name: propertyId
+          description: Id of the property.
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Details of the property.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Property'
+        '404':
+          description: Property not found.
+        '500':
+          description: Server error.
+      x-amazon-apigateway-integration:
+        uri:
+          Fn::Sub: arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${PropertyFunction.Arn}/invocations
+        httpMethod: POST
+        type: aws_proxy
+        passthroughBehavior: "when_no_match"
+        payloadFormatVersion: "1.0"
+
+  /properties/{propertyId}/availability:
+    get:
+      summary: Check availability of a property
+      description: Check if a specific property is available for booking.
+      parameters:
+        - in: path
+          name: propertyId
+          description: Id of the property.
+          required: true
+          schema:
+            type: integer
+        - in: query
+          name: startDate
+          description: The date since which the stay will start.
+          required: true
+          schema:
+            type: string
+            format: date
+        - in: query
+          name: endDate
+          description: The date till which the stay will last.
+          required: true
+          schema:
+            type: string
+            format: date
+      responses:
+        '200':
+          description: Availability of the property.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Availability'
+        '400':
+          description: Invalid parameters.
+        '404':
+          description: Property not found.
+        '500':
+          description: Server error.
+      x-amazon-apigateway-integration:
+        uri:
+          Fn::Sub: arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${AvailabilityFunction.Arn}/invocations
+        httpMethod: POST
+        type: aws_proxy
+        passthroughBehavior: "when_no_match"
+        payloadFormatVersion: "1.0"
+
+  /bookings:
+    post:
+      summary: Book a property
+      description: Book a property by providing necessary details.
+      requestBody:
+        description: Booking details.
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BookingRequest'
+      responses:
+        '201':
+          description: Booking confirmed.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BookingResponse'
+        '400':
+          description: Invalid booking information.
+        '500':
+          description: Server error.
+      x-amazon-apigateway-integration:
+        uri:
+          Fn::Sub: arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${BookingFunction.Arn}/invocations
+        httpMethod: POST
+        type: aws_proxy
+        passthroughBehavior: "when_no_match"
+        payloadFormatVersion: "1.0"
+
+  /bookings/{bookingId}:
+    delete:
+      summary: Cancel a booking
+      description: Cancel a booking by providing the booking ID.
+      parameters:
+        - name: bookingId
+          in: path
+          description: The ID of the booking to be cancelled.
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '204':
+          description: Booking cancelled.
+        '404':
+          description: Booking not found.
+        '500':
+          description: Server error.
+      x-amazon-apigateway-integration:
+        uri:
+          Fn::Sub: arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${CancelFunction.Arn}/invocations
+        httpMethod: POST
+        type: aws_proxy
+        passthroughBehavior: "when_no_match"
+        payloadFormatVersion: "1.0"
+
+components:
+  schemas:
+    SearchOptions:
+      type: object
+      properties:
+        city:
+          type: string
+          example: New York
+        country:
+          type: string
+          example: USA
+        bedrooms:
+          type: integer
+          example: 3
+        guests:
+          type: integer
+          example: 6
+    Property:
+      type: object
+      required:
+        - propertyId
+        - address
+        - city
+        - country
+        - location
+        - size
+        - bedrooms
+        - guests
+      properties:
+        propertyId:
+          type: integer
+          example: 1
+        address:
+          type: string
+          example: 123 Elm St
+        city:
+          type: string
+        country:
+          type: string
+        location:
+          type: string
+        size:
+          type: integer
+        bedrooms:
+          type: integer
+        guests:
+          type: integer
+        layout:
+          type: string
+        architecturalStyle:
+          type: string
+        recommendationDescription:
+          type: string
+        emergencyInstructions:
+          type: string
+        accessInstructions:
+          type: string
+        featureDescription:
+          type: string
+        ruleDescription:
+          type: string
+        securityDescription:
+          type: string
+        utilities:
+          type: string
+    Availability:
+      type: object
+      required:
+        - available
+        - price
+      properties:
+        available:
+          type: boolean
+        price:
+          type: number
+          format: float
+    BookingRequest:
+      type: object
+      required:
+        - propertyId
+        - customerName
+        - contactDetails
+        - paymentInformation
+        - startDate
+        - endDate
+      properties:
+        propertyId:
+          type: integer
+          example: 1
+        customerName:
+          type: string
+          example: John Doe
+        contactDetails:
+          type: object
+          properties:
+            email:
+              type: string
+              example: john.doe@example.com
+            phone:
+              type: string
+              example: '+1234567890'
+        paymentInformation:
+          type: object
+          properties:
+            cardNumber:
+              type: string
+              example: '4111111111111111'
+            expiryDate:
+              type: string
+              example: '12/23'
+            cvv:
+              type: string
+              example: '123'
+        startDate:
+          type: string
+          format: date
+          example: '2023-01-01'
+        endDate:
+          type: string
+          format: date
+          example: '2023-01-07'
+    BookingResponse:
+      type: object
+      required:
+        - bookingId
+        - propertyId
+        - customerName
+        - startDate
+        - endDate
+        - totalAmount
+      properties:
+        bookingId:
+          type: string
+          format: uuid
+          example: 'f81d4fae-7dec-11d0-a765-00a0c91e6bf6'
+        propertyId:
+          type: integer
+          example: 1
+        customerName:
+          type: string
+          example: John Doe
+        startDate:
+          type: string
+          format: date
+          example: '2023-01-01'
+        endDate:
+          type: string
+          format: date
+          example: '2023-01-07'
+        totalAmount:
+          type: number
+          format: float
+          example: 1200.50
+        checkInInstructions:
+          type: string
+          example: Keyless entry with keypad code
