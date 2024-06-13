@@ -2,6 +2,12 @@ import axios from "axios";
 import { Handler } from 'aws-lambda';
 import { parseString } from "xml2js";
 
+interface QueryParameter {
+    name: string;
+    type: string;
+    value: string | number;
+}
+
 export const handler: Handler = async (event) => {
     console.log('EVENT: \n' + JSON.stringify(event, null, 2));
 
@@ -26,9 +32,9 @@ export const handler: Handler = async (event) => {
         });
     } else if (apiPath == '/properties/{propertyId}/availability') {
         console.log('Processing /properties/{propertyId}/availability endpoint');
-        const propertyId = event.parameters[0]?.value || undefined;
-        const endDate = event.parameters[1]?.value || undefined;
-        const startDate = event.parameters[2]?.value || undefined;
+        const propertyId = event.parameters.find((param: QueryParameter) => param.name === "propertyId")?.value || undefined;
+        const startDate = event.parameters.find((param: QueryParameter) => param.name === "startDate")?.value || undefined;
+        const endDate = event.parameters.find((param: QueryParameter) => param.name === "endDate")?.value || undefined;
         console.log(`Parameters: propertyId=${propertyId}, endDate=${endDate}, startDate=${startDate}`);
         const url = `${baseUrl}/properties/${propertyId}/availability`;
         console.log(`Calling API with URL: ${url}`);
@@ -50,10 +56,10 @@ export const handler: Handler = async (event) => {
         console.log('Processing /properties/search endpoint');
         const properties = event?.requestBody?.content["application/json"]?.properties || undefined;
         if (properties) {
-            const city = properties[0]?.value || undefined;
-            const guests = properties[1]?.value || undefined;
-            const country = properties[2]?.value || undefined;
-            const bedrooms = properties[3]?.value || undefined;
+            const city = properties.find((param: QueryParameter) => param.name === "city")?.value  || undefined;
+            const country = properties.find((param: QueryParameter) => param.name === "country")?.value || undefined;
+            const bedrooms = properties.find((param: QueryParameter) => param.name === "bedrooms")?.value|| undefined;
+            const guests = properties.find((param: QueryParameter) => param.name === "guests")?.value || undefined;
             console.log(`Parameters: city=${city}, guests=${guests}, country=${country}, bedrooms=${bedrooms}`);
             const url = `${baseUrl}/properties/search`;
             console.log(`Calling API with URL: ${url}`);
@@ -77,12 +83,12 @@ export const handler: Handler = async (event) => {
     } else if (apiPath == '/bookings') {
         console.log('Processing /bookings endpoint');
         const properties = event.requestBody.content["application/json"].properties;
-        const customerName = properties[0]?.value || undefined;
-        const propertyId = properties[1]?.value || undefined;
-        let contactDetails = properties[2]?.value || undefined;
-        const endDate = properties[3]?.value || undefined;
-        const startDate = properties[4]?.value || undefined;
-        let paymentInformation = properties[5]?.value || undefined;
+        const propertyId = properties.find((param: QueryParameter) => param.name === "propertyId")?.value || undefined;
+        const customerName = properties.find((param: QueryParameter) => param.name === "customerName")?.value || undefined;
+        let contactDetails = properties.find((param: QueryParameter) => param.name === "contactDetails")?.value || undefined;
+        let paymentInformation = properties.find((param: QueryParameter) => param.name === "paymentInformation")?.value || undefined;
+        const startDate = properties.find((param: QueryParameter) => param.name === "startDate")?.value || undefined;
+        const endDate = properties.find((param: QueryParameter) => param.name === "endDate")?.value || undefined;
         console.log(`Parameters: customerName=${customerName}, propertyId=${propertyId}, endDate=${endDate}, startDate=${startDate}`);
 
         if (paymentInformation.includes("</")) {
